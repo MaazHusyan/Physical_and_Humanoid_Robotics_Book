@@ -1,55 +1,67 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: none → 1.0.0
+- List of modified principles:
+  - [I. Branch-Locked Execution]
+  - [II. Technical Invariants & Safety]
+  - [III. Intelligence & Bonus Optimization]
+  - [IV. Feature Requirements]
+  - [V. Directory Structure]
+- Added sections: Core Principles, Governance
+- Removed sections: N/A
+- Templates requiring updates:
+  - ✅ updated: .specify/templates/plan-template.md
+  - ✅ updated: .specify/templates/spec-template.md
+  - ✅ updated: .specify/templates/tasks-template.md
+- Follow-up TODOs: none
+-->
+
+# Physical and Humanoid Robotics Book Constitution
+
+Establish core principles for an AI-native textbook project using the Spec-Driven Development (SDD) flow.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Branch-Locked Execution Flow
+Development must be section-aware. Follow a strict branch naming convention: `section-N-feature-name`. Agents must only perform work relevant to the current branch section. Progression: Section 1 (Foundation) -> Section 2 (Intelligence/RAG) -> Section 3 (User/Auth) -> Section 4 (AI Features).
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Technical Invariants & Safety
+- Environment: Use `uv` for all Python backend management.
+- Frontend: Docusaurus using JavaScript for simplicity and modularity.
+- Backend: FastAPI with Neon (Postgres) and Qdrant (Vector DB).
+- Verification: NEVER guess documentation. Use `context7` MCP or WebSearch before implementing any third-party tool or formula.
+- Physics: All robotics content must use SI units and a Z-up coordinate system.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Intelligence & Bonus Optimization
+- Modular IQ: Architect complex features (RAG, Translation, Personalization) as reusable Claude Code Subagents and Agent Skills to maximize score.
+- SDD Rigor: Every code change requires a Spec -> Plan -> Task -> Implement cycle. No "quick fixes" or code drift allowed.
+- PHR Mandate: A Prompt History Record must be created for every single user interaction.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Feature Requirements
+- RAG: Chatbot must support general content Q&A and user-selected text context.
+- Auth: Better-Auth integration for user profiling (Software/Hardware background).
+- AI Buttons: Implement server-side "Personalize" and "Urdu Translate" logic based on user session data.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-### [PRINCIPLE_6_NAME]
-
-
-[PRINCIPLE__DESCRIPTION]
-
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Directory Structure
+Ensure clean separation of concerns.
+- `/server`: FastAPI Backend
+- `/content`: Docusaurus Frontend
+- `/specs`: SDD Artifacts
+- `/history`: PHRs and ADRs
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+This constitution is the authoritative guide for all project development.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Amendment Procedure
+1. Propose change via conversation.
+2. Draft amendment and update version.
+3. Run `/sp.analyze` to ensure across-artifact consistency.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Versioning Policy
+- Semantic versioning (MAJOR.MINOR.PATCH) is strictly followed.
+- Version increments are decided by the impact on existing principles.
+
+### Compliance
+All automated agents and human developers must adhere to these principles. Deviations are considered critical failures and must be corrected immediately.
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
