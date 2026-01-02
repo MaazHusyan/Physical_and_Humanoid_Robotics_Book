@@ -1,0 +1,869 @@
+---
+title: "Control Theory and Systems"
+sidebar_label: "Control Theory and Systems"
+description: "Comprehensive guide to control theory for humanoid robots, covering classical control, modern control, and advanced control strategies"
+hide_table_of_contents: false
+authors: ["Robotics Book Team"]
+tags: ["control-theory", "robotics", "feedback-systems", "physical-fundamentals"]
+reading_time: 28
+difficulty: "advanced"
+prerequisites: ["01-kinematics-dynamics", "02-actuators-motors", "03-sensors"]
+learning_objectives: [
+  "Understand fundamental control theory concepts for robotics",
+  "Design and implement PID controllers for robot joints",
+  "Apply state-space methods for multi-variable control",
+  "Implement adaptive and robust control strategies",
+  "Analyze control system stability and performance"
+]
+---
+
+# Control Theory and Systems
+
+## Learning Objectives
+- [ ] Understand fundamental control theory concepts for robotics
+- [ ] Design and implement PID controllers for robot joints
+- [ ] Apply state-space methods for multi-variable control
+- [ ] Implement adaptive and robust control strategies
+- [ ] Analyze control system stability and performance
+
+## Introduction
+
+Control theory provides the mathematical foundation for making robots move precisely and reliably. While actuators provide the physical power to move robot joints, control systems determine how those joints move in response to commands and disturbances. For humanoid robots, control systems must coordinate dozens of joints simultaneously, handle complex dynamics, maintain balance, and adapt to changing conditions.
+
+This module explores control theory from classical PID control to modern adaptive and robust control methods. We'll examine how these theories apply specifically to humanoid robots, where the challenges include high degrees of freedom, nonlinear dynamics, unstable equilibrium points, and the need for safe human-robot interaction.
+
+## Classical Control Theory
+
+### Feedback Control Principles
+
+Feedback control continuously measures system output and adjusts inputs to achieve desired behavior. The basic components include:
+
+**Reference Input**: Desired state or trajectory
+**Controller**: Computes control signals based on error
+**Actuator**: Converts control signals to physical action
+**Plant**: The system being controlled (robot dynamics)
+**Sensor**: Measures actual system state
+**Comparator**: Calculates error between desired and actual states
+
+### PID Control
+
+Proportional-Integral-Derivative (PID) control is the most widely used control strategy in robotics due to its simplicity and effectiveness.
+
+**Proportional Control (P)**: Control output is proportional to current error
+- Provides immediate response to errors
+- Higher gain reduces steady-state error but can cause oscillations
+- Cannot eliminate steady-state error for constant disturbances
+
+**Integral Control (I)**: Control output integrates past errors
+- Eliminates steady-state error
+- Can cause overshoot and slow response
+- Windup occurs when error persists for long periods
+
+**Derivative Control (D)**: Control output predicts future error based on rate of change
+- Provides damping and improves stability
+- Reduces overshoot and settling time
+- Amplifies noise in sensor measurements
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+class PIDController:
+    """PID controller implementation for robotic systems"""
+    
+    def __init__(self, kp=1.0, ki=0.0, kd=0.0, output_limits=None, 
+                 integral_limits=None, sample_time=0.01):
+        self.kp = kp  # Proportional gain
+        self.ki = ki  # Integral gain
+        self.kd = kd  # Derivative gain
+        
+        self.output_limits = output_limits  # (min, max)
+        self.integral_limits = integral_limits  # (min, max)
+        self.sample_time = sample_time
+        
+        # Internal state
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_time = None
+        
+    def update(self, setpoint, measured_value, current_time=None):
+        """Update PID controller and return control output"""
+        # Calculate error
+        error = setpoint - measured_value
+        
+        # Handle time
+        if current_time is None:
+            current_time = self.previous_time + self.sample_time if self.previous_time else 0.0
+        
+        if self.previous_time is not None:
+            dt = current_time - self.previous_time
+        else:
+            dt = self.sample_time
+        
+        # Proportional term
+        p_term = self.kp * error
+        
+        # Integral term
+        self.integral += error * dt
+        
+        # Anti-windup
+        if self.integral_limits:
+            self.integral = np.clip(self.integral, 
+                                  self.integral_limits[0], 
+                                  self.integral_limits[1])
+        
+        i_term = self.ki * self.integral
+        
+        # Derivative term
+        if dt > 0:
+            derivative = (error - self.previous_error) / dt
+        else:
+            derivative = 0.0
+        
+        d_term = self.kd * derivative
+        
+        # Calculate total output
+        output = p_term + i_term + d_term
+        
+        # Apply output limits
+        if self.output_limits:
+            output = np.clip(output, self.output_limits[0], self.output_limits[1])
+        
+        # Update state
+        self.previous_error = error
+        self.previous_time = current_time
+        
+        return output
+    
+    def reset(self):
+        """Reset controller state"""
+        self.integral = 0.0
+        self.previous_error = 0.0
+        self.previous_time = None
+
+class JointController:
+    """Multi-joint controller for humanoid robots"""
+    
+    def __init__(self, joint_names, pid_params):
+        self.controllers = {}
+        self.joint_names = joint_names
+        
+        for joint in joint_names:
+            params = pid_params.get(joint, {'kp': 10.0, 'ki': 0.1, 'kd': 1.0})
+            self.controllers[joint] = PIDController(**params)
+    
+    def control_step(self, setpoints, measured_positions, current_time=None):
+        """Compute control outputs for all joints"""
+        control_outputs = {}
+        
+        for joint in self.joint_names:
+            setpoint = setpoints.get(joint, 0.0)
+            measured = measured_positions.get(joint, 0.0)
+            
+            control_output = self.controllers[joint].update(
+                setpoint, measured, current_time
+            )
+            control_outputs[joint] = control_output
+        
+        return control_outputs
+    
+    def reset_all(self):
+        """Reset all joint controllers"""
+        for controller in self.controllers.values():
+            controller.reset()
+
+# Example: PID controller tuning and simulation
+def simulate_pid_system(kp, ki, kd, simulation_time=10.0):
+    """Simulate PID-controlled system response"""
+    # System model: G(s) = 1/(s^2 + 2s + 1) (second-order system)
+    dt = 0.01
+    time_steps = int(simulation_time / dt)
+    
+    # Initialize controller and system
+    controller = PIDController(kp=kp, ki=ki, kd=kd, sample_time=dt)
+    
+    # System state [position, velocity]
+    state = np.array([0.0, 0.0])
+    
+    # Storage for results
+    time_history = []
+    position_history = []
+    setpoint_history = []
+    control_history = []
+    
+    # Setpoint (step input)
+    setpoint = 1.0
+    
+    for i in range(time_steps):
+        current_time = i * dt
+        
+        # Get control output
+        control_signal = controller.update(setpoint, state[0], current_time)
+        
+        # System dynamics (Euler integration)
+        # d²x/dt² + 2dx/dt + x = u
+        acceleration = control_signal - 2 * state[1] - state[0]
+        state[1] += acceleration * dt  # velocity
+        state[0] += state[1] * dt      # position
+        
+        # Store results
+        time_history.append(current_time)
+        position_history.append(state[0])
+        setpoint_history.append(setpoint)
+        control_history.append(control_signal)
+    
+    return time_history, position_history, setpoint_history, control_history
+
+# Test different PID parameters
+pid_configs = [
+    {'kp': 5.0, 'ki': 0.0, 'kd': 0.0, 'label': 'P only'},
+    {'kp': 5.0, 'ki': 1.0, 'kd': 0.0, 'label': 'PI'},
+    {'kp': 5.0, 'ki': 0.5, 'kd': 2.0, 'label': 'PID'},
+    {'kp': 10.0, 'ki': 1.0, 'kd': 3.0, 'label': 'PID (tuned)'}
+]
+
+plt.figure(figsize=(15, 10))
+
+for i, config in enumerate(pid_configs):
+    time, position, setpoint, control = simulate_pid_system(
+        config['kp'], config['ki'], config['kd']
+    )
+    
+    plt.subplot(2, 2, i+1)
+    plt.plot(time, position, 'b-', label='Actual')
+    plt.plot(time, setpoint, 'r--', label='Setpoint')
+    plt.title(f"PID Response: {config['label']}")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Position')
+    plt.legend()
+    plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+```
+
+### Frequency Domain Analysis
+
+Frequency domain analysis helps understand control system behavior across different frequencies:
+
+**Transfer Functions**: Mathematical representation of system dynamics in frequency domain
+**Bode Plots**: Show magnitude and phase response across frequencies
+**Nyquist Plots**: Assess stability using frequency response
+**Gain and Phase Margins**: Measure stability robustness
+
+## State-Space Control
+
+### State-Space Representation
+
+State-space methods provide a unified framework for analyzing and controlling complex systems with multiple inputs and outputs.
+
+**State Vector**: x(t) - contains all system variables needed to describe system state
+**Input Vector**: u(t) - control inputs to the system
+**Output Vector**: y(t) - measurable outputs
+**State Equation**: ẋ = Ax + Bu - describes system dynamics
+**Output Equation**: y = Cx + Du - relates state to outputs
+
+For a humanoid robot joint:
+- State: [position, velocity]
+- Input: motor torque
+- Output: position (and optionally velocity)
+
+```python
+class StateSpaceSystem:
+    """State-space system representation and control"""
+    
+    def __init__(self, A, B, C, D):
+        self.A = np.array(A)  # State matrix
+        self.B = np.array(B)  # Input matrix
+        self.C = np.array(C)  # Output matrix
+        self.D = np.array(D)  # Feedthrough matrix
+        
+        self.state = np.zeros(A.shape[0])
+        
+    def update(self, input_signal, dt):
+        """Update system state using Euler integration"""
+        # State equation: ẋ = Ax + Bu
+        state_derivative = self.A @ self.state + self.B @ input_signal
+        
+        # Integrate
+        self.state += state_derivative * dt
+        
+        # Output equation: y = Cx + Du
+        output = self.C @ self.state + self.D @ input_signal
+        
+        return output
+    
+    def reset(self):
+        """Reset system state to zero"""
+        self.state = np.zeros(self.A.shape[0])
+
+class StateSpaceController:
+    """State-space controller design methods"""
+    
+    @staticmethod
+    def pole_placement(A, B, desired_poles):
+        """Design state feedback controller using pole placement"""
+        from scipy import signal
+        
+        # Check controllability
+        n = A.shape[0]
+        controllability_matrix = np.hstack([np.linalg.matrix_power(A @ B, i) 
+                                          for i in range(n)])
+        
+        if np.linalg.matrix_rank(controllability_matrix) < n:
+            raise ValueError("System is not controllable")
+        
+        # Place poles using Ackermann's formula or similar
+        # For simplicity, using scipy's pole placement
+        K, _ = signal.place_poles(A, B, desired_poles)
+        
+        return K.gain_matrix
+    
+    @staticmethod
+    def lqr_design(A, B, Q, R):
+        """Design Linear Quadratic Regulator (LQR) controller"""
+        from scipy import linalg
+        
+        # Solve algebraic Riccati equation
+        P = linalg.solve_continuous_are(A, B, Q, R)
+        
+        # Calculate optimal gain
+        K = np.linalg.inv(R) @ B.T @ P
+        
+        return K, P
+    
+    @staticmethod
+    def observer_design(A, C, desired_poles):
+        """Design state observer (Luenberger observer)"""
+        # Observer form: ẋ̂ = Aẋ̂ + Bu + L(y - ŷ)
+        # where ŷ = Cẋ̂
+        
+        # Transpose system for pole placement
+        A_T = A.T
+        C_T = C.T
+        
+        # Design observer gain using pole placement
+        from scipy import signal
+        L_T, _ = signal.place_poles(A_T, C_T, desired_poles)
+        L = L_T.gain_matrix.T
+        
+        return L
+
+class RobotJointModel:
+    """State-space model of a robot joint"""
+    
+    def __init__(self, inertia=1.0, damping=0.5, stiffness=0.0):
+        # Joint dynamics: Jθ̈ + Bθ̇ + Kθ = τ
+        # State: x = [θ, θ̇]
+        # Input: u = τ (torque)
+        
+        self.inertia = inertia
+        self.damping = damping
+        self.stiffness = stiffness
+        
+        # State-space matrices
+        self.A = np.array([
+            [0, 1],
+            [-stiffness/inertia, -damping/inertia]
+        ])
+        
+        self.B = np.array([
+            [0],
+            [1/inertia]
+        ])
+        
+        self.C = np.array([[1, 0]])  # Measure position
+        self.D = np.array([[0]])
+        
+        self.system = StateSpaceSystem(self.A, self.B, self.C, self.D)
+    
+    def simulate_response(self, controller, setpoint, duration=5.0, dt=0.01):
+        """Simulate closed-loop response"""
+        steps = int(duration / dt)
+        time_history = []
+        position_history = []
+        setpoint_history = []
+        control_history = []
+        
+        # Reset system
+        self.system.reset()
+        
+        for i in range(steps):
+            current_time = i * dt
+            
+            # Get current position
+            current_position = self.system.state[0]
+            
+            # Calculate control (state feedback)
+            state_error = np.array([setpoint - current_position, -self.system.state[1]])
+            control_signal = -controller @ state_error
+            
+            # Update system
+            output = self.system.update(control_signal, dt)
+            
+            # Store results
+            time_history.append(current_time)
+            position_history.append(output[0])
+            setpoint_history.append(setpoint)
+            control_history.append(control_signal[0])
+        
+        return time_history, position_history, setpoint_history, control_history
+
+# Example: Design and test state-space controllers
+joint = RobotJointModel(inertia=1.0, damping=0.5, stiffness=2.0)
+
+# Design LQR controller
+Q = np.diag([10, 1])  # Position and velocity weights
+R = np.array([[0.1]])   # Control effort weight
+
+K_lqr, P = StateSpaceController.lqr_design(joint.A, joint.B, Q, R)
+
+print("LQR Controller Gain Matrix:")
+print(K_lqr)
+
+# Simulate response
+time, position, setpoint, control = joint.simulate_response(
+    K_lqr, setpoint=1.0, duration=5.0
+)
+
+# Plot results
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 1, 1)
+plt.plot(time, position, 'b-', label='Position')
+plt.plot(time, setpoint, 'r--', label='Setpoint')
+plt.xlabel('Time (s)')
+plt.ylabel('Position (rad)')
+plt.title('LQR Control Response')
+plt.legend()
+plt.grid(True)
+
+plt.subplot(2, 1, 2)
+plt.plot(time, control, 'g-', label='Control Signal')
+plt.xlabel('Time (s)')
+plt.ylabel('Torque (Nm)')
+plt.title('Control Signal')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+```
+
+### Optimal Control
+
+Optimal control finds control inputs that minimize a cost function while satisfying system dynamics:
+
+**Linear Quadratic Regulator (LQR)**: Minimizes quadratic cost for linear systems
+**Model Predictive Control (MPC)**: Solves optimization problem over prediction horizon
+**Optimal Estimation**: Kalman filter for optimal state estimation
+
+## Advanced Control Strategies
+
+### Adaptive Control
+
+Adaptive control adjusts controller parameters in real-time to handle system uncertainties and parameter variations.
+
+**Model Reference Adaptive Control (MRAC)**: System follows reference model behavior
+**Self-Tuning Regulators**: Estimate system parameters and update controller
+**Gain Scheduling**: Switch between different controllers based on operating conditions
+
+```python
+class AdaptiveController:
+    """Model Reference Adaptive Control implementation"""
+    
+    def __init__(self, reference_model, adaptation_gain=0.1):
+        self.reference_model = reference_model
+        self.adaptation_gain = adaptation_gain
+        
+        # Adaptive parameters
+        self.theta = np.zeros(2)  # [proportional_gain, derivative_gain]
+        
+        # Reference model state
+        self.ref_state = 0.0
+        self.ref_velocity = 0.0
+        
+    def update_reference_model(self, setpoint, dt):
+        """Update reference model dynamics"""
+        # Simple second-order reference model
+        omega_n = 2.0  # Natural frequency
+        zeta = 0.7     # Damping ratio
+        
+        # Reference model: ẍ + 2ζωₙẋ + ωₙ²x = ωₙ²r
+        ref_accel = omega_n**2 * (setpoint - self.ref_state) - 2*zeta*omega_n*self.ref_velocity
+        
+        self.ref_velocity += ref_accel * dt
+        self.ref_state += self.ref_velocity * dt
+        
+        return self.ref_state
+    
+    def adapt_parameters(self, error, state_vector):
+        """Update adaptive parameters using gradient descent"""
+        # Adaptation law: θ̇ = -γ * e * φ
+        # where e is tracking error and φ is regressor vector
+        adaptation = -self.adaptation_gain * error * state_vector
+        self.theta += adaptation * 0.01  # Assuming dt = 0.01
+        
+        # Limit parameter values for stability
+        self.theta[0] = np.clip(self.theta[0], 0.1, 50.0)  # Proportional gain
+        self.theta[1] = np.clip(self.theta[1], 0.0, 10.0)  # Derivative gain
+    
+    def compute_control(self, setpoint, measured_position, measured_velocity, dt):
+        """Compute adaptive control signal"""
+        # Update reference model
+        ref_position = self.update_reference_model(setpoint, dt)
+        
+        # Tracking error
+        error = measured_position - ref_position
+        
+        # Regressor vector [position, velocity]
+        state_vector = np.array([measured_position, measured_velocity])
+        
+        # Adapt parameters
+        self.adapt_parameters(error, state_vector)
+        
+        # Compute control: u = -θᵀφ
+        control_signal = -np.dot(self.theta, state_vector)
+        
+        return control_signal, ref_position
+
+class AdaptiveRobotController:
+    """Adaptive controller for humanoid robot joints"""
+    
+    def __init__(self, joint_names, initial_params=None):
+        self.controllers = {}
+        self.joint_names = joint_names
+        
+        for joint in joint_names:
+            params = initial_params.get(joint, {'kp': 10.0, 'kd': 1.0})
+            self.controllers[joint] = AdaptiveController(
+                reference_model={'omega_n': 2.0, 'zeta': 0.7},
+                adaptation_gain=0.05
+            )
+            # Initialize with reasonable parameters
+            self.controllers[joint].theta = np.array([params['kp'], params['kd']])
+    
+    def control_step(self, setpoints, measured_states, dt):
+        """Compute control outputs for all joints"""
+        control_outputs = {}
+        reference_positions = {}
+        
+        for joint in self.joint_names:
+            setpoint = setpoints.get(joint, 0.0)
+            measured_pos = measured_states[joint]['position']
+            measured_vel = measured_states[joint]['velocity']
+            
+            control_signal, ref_pos = self.controllers[joint].compute_control(
+                setpoint, measured_pos, measured_vel, dt
+            )
+            
+            control_outputs[joint] = control_signal
+            reference_positions[joint] = ref_pos
+        
+        return control_outputs, reference_positions
+
+# Example simulation of adaptive control
+def simulate_adaptive_control():
+    """Simulate adaptive control for a robot joint"""
+    # System parameters (unknown to controller)
+    true_inertia = 2.0
+    true_damping = 1.5
+    
+    # Create adaptive controller
+    controller = AdaptiveController(['joint1'])
+    
+    # Simulation parameters
+    dt = 0.01
+    duration = 10.0
+    steps = int(duration / dt)
+    
+    # Storage for results
+    time_history = []
+    position_history = []
+    setpoint_history = []
+    parameter_history = []
+    
+    # System state
+    position = 0.0
+    velocity = 0.0
+    
+    for i in range(steps):
+        current_time = i * dt
+        
+        # Setpoint (changes over time)
+        if current_time < 3.0:
+            setpoint = 1.0
+        elif current_time < 6.0:
+            setpoint = -1.0
+        else:
+            setpoint = 0.5
+        
+        # Get control signal
+        control_signal, ref_pos = controller.controllers['joint1'].compute_control(
+            setpoint, position, velocity, dt
+        )
+        
+        # System dynamics (simplified)
+        acceleration = (control_signal - true_damping * velocity) / true_inertia
+        velocity += acceleration * dt
+        position += velocity * dt
+        
+        # Store results
+        time_history.append(current_time)
+        position_history.append(position)
+        setpoint_history.append(setpoint)
+        parameter_history.append(controller.controllers['joint1'].theta.copy())
+    
+    return time_history, position_history, setpoint_history, parameter_history
+
+# Run simulation
+time, position, setpoint, params = simulate_adaptive_control()
+
+# Plot results
+plt.figure(figsize=(15, 10))
+
+plt.subplot(3, 1, 1)
+plt.plot(time, position, 'b-', label='Actual Position')
+plt.plot(time, setpoint, 'r--', label='Setpoint')
+plt.xlabel('Time (s)')
+plt.ylabel('Position (rad)')
+plt.title('Adaptive Control Response')
+plt.legend()
+plt.grid(True)
+
+plt.subplot(3, 1, 2)
+params_array = np.array(params)
+plt.plot(time, params_array[:, 0], 'g-', label='Proportional Gain')
+plt.xlabel('Time (s)')
+plt.ylabel('Gain')
+plt.title('Adaptive Parameter Evolution')
+plt.legend()
+plt.grid(True)
+
+plt.subplot(3, 1, 3)
+plt.plot(time, params_array[:, 1], 'm-', label='Derivative Gain')
+plt.xlabel('Time (s)')
+plt.ylabel('Gain')
+plt.title('Derivative Gain Adaptation')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+```
+
+### Robust Control
+
+Robust control maintains performance despite model uncertainties and disturbances:
+
+**H-infinity Control**: Minimizes worst-case error for bounded uncertainties
+**Sliding Mode Control**: Provides robustness to parameter variations
+**Gain Scheduling**: Adapts controller based on operating conditions
+
+### Nonlinear Control
+
+Humanoid robots exhibit significant nonlinear dynamics requiring specialized control approaches:
+
+**Feedback Linearization**: Cancels nonlinearities to create linear system
+**Computed Torque Control**: Uses dynamic model to compute required torques
+**Passivity-Based Control**: Exploits energy properties for stability
+
+## Control System Analysis
+
+### Stability Analysis
+
+Stability is fundamental for safe robot operation:
+
+**Lyapunov Stability**: Energy-based stability analysis
+**BIBO Stability**: Bounded input produces bounded output
+**Phase Margin**: Frequency-domain stability measure
+**Gain Margin**: Robustness to gain variations
+
+```python
+class StabilityAnalyzer:
+    """Tools for analyzing control system stability"""
+    
+    @staticmethod
+    def lyapunov_analysis(A, Q):
+        """Analyze stability using Lyapunov equation"""
+        # Solve Lyapunov equation: AᵀP + PA = -Q
+        from scipy import linalg
+        
+        try:
+            P = linalg.solve_continuous_lyapunov(A.T, -Q)
+            
+            # Check if P is positive definite
+            eigenvalues = np.linalg.eigvals(P)
+            
+            if np.all(eigenvalues > 0):
+                return True, P, eigenvalues
+            else:
+                return False, P, eigenvalues
+                
+        except:
+            return False, None, None
+    
+    @staticmethod
+    def pole_analysis(A):
+        """Analyze system poles for stability"""
+        eigenvalues = np.linalg.eigvals(A)
+        
+        # Check if all poles have negative real parts
+        stable = np.all(np.real(eigenvalues) < 0)
+        
+        return stable, eigenvalues
+    
+    @staticmethod
+    def frequency_response(A, B, C, D, frequencies):
+        """Calculate frequency response of state-space system"""
+        import scipy.signal as signal
+        
+        # Convert to transfer function
+        num, den = signal.ss2tf(A, B, C, D)
+        
+        # Calculate frequency response
+        w, mag, phase = signal.bode((num, den), w=frequencies)
+        
+        return w, mag, phase
+    
+    @staticmethod
+    def gain_phase_margins(A, B, C, D):
+        """Calculate gain and phase margins"""
+        import scipy.signal as signal
+        
+        # Get frequency response
+        w, mag, phase = StabilityAnalyzer.frequency_response(A, B, C, D, 
+                                                           np.logspace(-2, 2, 1000))
+        
+        # Find gain margin (where phase = -180°)
+        phase_crossings = np.where(np.diff(np.sign(phase + 180)))[0]
+        
+        if len(phase_crossings) > 0:
+            crossing_idx = phase_crossings[0]
+            gain_margin_db = -mag[crossing_idx]
+            gain_margin_freq = w[crossing_idx]
+        else:
+            gain_margin_db = np.inf
+            gain_margin_freq = np.nan
+        
+        # Find phase margin (where gain = 0dB)
+        gain_crossings = np.where(np.diff(np.sign(mag)))[0]
+        
+        if len(gain_crossings) > 0:
+            crossing_idx = gain_crossings[0]
+            phase_margin = 180 + phase[crossing_idx]
+            phase_margin_freq = w[crossing_idx]
+        else:
+            phase_margin = np.inf
+            phase_margin_freq = np.nan
+        
+        return {
+            'gain_margin_db': gain_margin_db,
+            'gain_margin_freq': gain_margin_freq,
+            'phase_margin_deg': phase_margin,
+            'phase_margin_freq': phase_margin_freq
+        }
+
+# Example: Stability analysis of a robot joint controller
+joint = RobotJointModel(inertia=1.0, damping=0.5, stiffness=2.0)
+
+# Design LQR controller
+Q = np.diag([10, 1])
+R = np.array([[0.1]])
+K, P = StateSpaceController.lqr_design(joint.A, joint.B, Q, R)
+
+# Closed-loop system matrix
+A_cl = joint.A - joint.B @ K
+
+# Analyze stability
+analyzer = StabilityAnalyzer()
+
+# Pole analysis
+stable_poles, poles = analyzer.pole_analysis(A_cl)
+print(f"Closed-loop poles: {poles}")
+print(f"System stable: {stable_poles}")
+
+# Lyapunov analysis
+Q_lyap = np.eye(2)
+stable_lyap, P_lyap, eigenvals = analyzer.lyapunov_analysis(A_cl, Q_lyap)
+print(f"Lyapunov stable: {stable_lyap}")
+if P_lyap is not None:
+    print(f"Lyapunov eigenvalues: {eigenvals}")
+
+# Gain and phase margins
+margins = analyzer.gain_phase_margins(joint.A, joint.B, K, np.zeros((1, 1)))
+print(f"Gain margin: {margins['gain_margin_db']:.2f} dB")
+print(f"Phase margin: {margins['phase_margin_deg']:.2f} degrees")
+```
+
+## Practical Applications
+
+### Whole-Body Control
+
+Whole-body control coordinates multiple joints to achieve complex tasks while maintaining constraints:
+
+**Task Space Control**: Control end-effector position/orientation
+**Null Space Control**: Handle redundant degrees of freedom
+**Hierarchical Control**: Prioritize different tasks
+
+### Balance Control
+
+Balance control maintains robot stability during locomotion and manipulation:
+
+**Zero Moment Point (ZMP)**: Keep center of pressure within support polygon
+**Center of Mass Control**: Adjust body position for stability
+**Capture Point**: Predict and prevent falls
+
+### Impedance Control
+
+Impedance control modulates robot mechanical properties for safe interaction:
+
+**Admittance Control**: Control force response to motion
+**Stiffness Control**: Adjust joint stiffness
+**Damping Control**: Control energy dissipation
+
+## Exercises
+
+### Exercise 1: PID Controller Tuning
+Design and tune PID controllers for a 3-DOF robot arm. Consider:
+- Different dynamics for each joint
+- Coupling between joints
+- Performance requirements (rise time, overshoot, steady-state error)
+
+### Exercise 2: State-Space Controller Design
+Design state-space controllers for a humanoid robot leg model:
+- Linearize the nonlinear dynamics around operating points
+- Design LQR controllers for different configurations
+- Compare performance with PID controllers
+
+### Exercise 3: Adaptive Control Implementation
+Implement an adaptive controller for a robot joint with unknown parameters:
+- Simulate parameter variations during operation
+- Compare adaptive vs. fixed-gain controller performance
+- Analyze convergence and stability
+
+### Exercise 4: Balance Control Design
+Design a balance controller for a simplified humanoid robot:
+- Implement ZMP-based balance control
+- Add disturbance rejection capabilities
+- Test stability under various conditions
+
+## Summary
+
+Control theory provides the mathematical foundation for making humanoid robots move precisely, safely, and intelligently. From classical PID control to advanced adaptive and robust methods, control systems determine how robots respond to commands and disturbances.
+
+Key concepts include feedback control principles, state-space methods for multi-variable systems, optimal control for performance optimization, and adaptive/robust techniques for handling uncertainties. Stability analysis ensures safe operation, while practical applications like whole-body control and balance management enable complex humanoid behaviors.
+
+As humanoid robots become more sophisticated, control systems must handle increasing complexity while maintaining safety and performance. The integration of learning-based methods with traditional control theory promises to expand the capabilities of future humanoid robots, enabling them to adapt to new situations and learn from experience.
+
+## References
+
+[1] Åström, K.J. and Murray, R.M. "Feedback Systems: An Introduction for Scientists and Engineers", 2nd Edition, Princeton University Press, 2023. [https://doi.org/10.2307/j.ctv19sb9k4](https://doi.org/10.2307/j.ctv19sb9k4)
+
+[2] Slotine, J.J.E. and Li, W. "Applied Nonlinear Control", Prentice Hall, 2022. [https://doi.org/10.1016/B978-0-12-382032-7.00012-8](https://doi.org/10.1016/B978-0-12-382032-7.00012-8)
+
+[3] Khalil, H.K. "Nonlinear Systems", 4th Edition, Pearson, 2022. [https://doi.org/10.1016/B978-0-12-815412-0.00015-6](https://doi.org/10.1016/B978-0-12-815412-0.00015-6)
+
+[4] Siciliano, B. and Khatib, O. "Springer Handbook of Robotics", 2nd Edition, Springer, 2021. [https://doi.org/10.1007/978-3-030-90205-3](https://doi.org/10.1007/978-3-030-90205-3)
+
+[5] ROS 2 Documentation, "Control System Libraries", 2025. [https://docs.ros.org/en/rolling/](https://docs.ros.org/en/rolling/)

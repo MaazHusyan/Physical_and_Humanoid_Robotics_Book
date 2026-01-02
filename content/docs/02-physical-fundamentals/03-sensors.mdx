@@ -1,0 +1,660 @@
+---
+title: "Sensors and Perception"
+sidebar_label: "Sensors and Perception"
+description: "Comprehensive guide to robotic sensors and perception systems for humanoid robots, covering proprioception, exteroception, and sensor fusion"
+hide_table_of_contents: false
+authors: ["Robotics Book Team"]
+tags: ["sensors", "perception", "robotics", "physical-fundamentals"]
+reading_time: 25
+difficulty: "intermediate"
+prerequisites: ["01-kinematics-dynamics", "02-actuators-motors"]
+learning_objectives: [
+  "Understand different types of sensors used in humanoid robotics",
+  "Compare proprioceptive and exteroceptive sensing systems",
+  "Analyze sensor characteristics and selection criteria",
+  "Implement sensor fusion for robust perception",
+  "Design sensor placement for optimal humanoid robot perception"
+]
+---
+
+# Sensors and Perception
+
+## Learning Objectives
+- [ ] Understand different types of sensors used in humanoid robotics
+- [ ] Compare proprioceptive and exteroceptive sensing systems
+- [ ] Analyze sensor characteristics and selection criteria
+- [ ] Implement sensor fusion for robust perception
+- [ ] Design sensor placement for optimal humanoid robot perception
+
+## Introduction
+
+Sensors serve as the sensory organs of humanoid robots, enabling them to perceive themselves and their environment. Just as humans rely on vision, touch, balance, and proprioception to navigate and interact with the world, humanoid robots require sophisticated sensor systems to achieve similar capabilities. These sensors provide the raw data that robots use to understand their internal state, detect obstacles, recognize objects, and make intelligent decisions.
+
+The complexity of humanoid locomotion and manipulation demands multiple, complementary sensing modalities. A humanoid robot must know the position of its joints, the forces it's applying, its orientation in space, and the location of objects around it. This module explores the diverse sensor technologies that make such perception possible, from simple encoders to complex vision systems.
+
+## Proprioceptive Sensors
+
+Proprioceptive sensors provide information about the robot's internal state, including joint positions, velocities, forces, and overall orientation. They are essential for closed-loop control and enable robots to perform precise movements despite disturbances and uncertainties.
+
+### Joint Position Sensors
+
+**Rotary Encoders** measure angular position and velocity of robot joints. They come in two main varieties:
+
+**Incremental Encoders** output pulses as the shaft rotates, requiring a reference position to determine absolute angle. They offer high resolution and are cost-effective but lose position information during power loss.
+
+**Absolute Encoders** provide a unique digital code for each angular position, maintaining position information even after power cycling. They are more expensive but eliminate the need for homing procedures.
+
+**Resolution and Accuracy**: Encoder resolution determines the smallest detectable angular change. High-precision applications may require resolutions of 20 bits or more, providing approximately one million discrete positions per revolution.
+
+### Force and Torque Sensors
+
+**Strain Gauge Sensors** measure deformation of materials under load. When force is applied, the strain gauge's electrical resistance changes proportionally, allowing precise force measurement.
+
+**Six-Axis Force/Torque Sensors** measure forces and torques along all three Cartesian axes (Fx, Fy, Fz, Tx, Ty, Tz). These sensors are crucial for:
+- Force-controlled manipulation
+- Collision detection
+- Walking on uneven terrain
+- Safe human-robot interaction
+
+**Capacitive Force Sensors** use changes in capacitance to measure force. They offer advantages in certain applications due to their compact size and low power consumption.
+
+### Inertial Measurement Units (IMUs)
+
+IMUs combine multiple sensors to measure orientation and motion:
+
+**Accelerometers** measure linear acceleration along three axes. They detect gravity direction, allowing estimation of tilt angle when stationary.
+
+**Gyroscopes** measure angular velocity around three axes. They provide information about rotational motion and help track orientation changes.
+
+**Magnetometers** measure magnetic field strength, typically used to determine heading relative to Earth's magnetic field.
+
+**Sensor Fusion**: Raw IMU data is noisy and drifts over time. Complementary filters or Kalman filters combine accelerometer and gyroscope data to provide accurate orientation estimates.
+
+```python
+import numpy as np
+
+class IMUFilter:
+    """Complementary filter for IMU sensor fusion"""
+    
+    def __init__(self, alpha=0.98):
+        self.alpha = alpha  # Complementary filter coefficient
+        self.angle = np.array([0.0, 0.0, 0.0])  # Roll, pitch, yaw
+        
+    def update(self, accel_data, gyro_data, dt):
+        """Update orientation estimate using complementary filter"""
+        # Integrate gyroscope data
+        gyro_angle = self.angle + gyro_data * dt
+        
+        # Calculate angle from accelerometer (roll and pitch only)
+        accel_x, accel_y, accel_z = accel_data
+        accel_angle = np.array([
+            np.arctan2(accel_y, np.sqrt(accel_x**2 + accel_z**2)),
+            np.arctan2(-accel_x, np.sqrt(accel_y**2 + accel_z**2)),
+            self.angle[2]  # Yaw from magnetometer or integration only
+        ])
+        
+        # Complementary filter: combine gyroscope and accelerometer
+        self.angle = self.alpha * gyro_angle + (1 - self.alpha) * accel_angle
+        
+        return self.angle
+
+# Example usage
+imu_filter = IMUFilter(alpha=0.98)
+
+# Simulate sensor data
+dt = 0.01  # 100Hz sampling
+time_steps = 1000
+
+for i in range(time_steps):
+    # Simulated sensor readings (would come from actual IMU)
+    accel_data = np.array([0.1, 0.2, 9.8])  # Slight tilt
+    gyro_data = np.array([0.01, -0.02, 0.0])  # Small rotation
+    
+    orientation = imu_filter.update(accel_data, gyro_data, dt)
+    
+    if i % 100 == 0:
+        print(f"Time {i*dt:.2f}s: Roll={np.degrees(orientation[0]):.1f}°, "
+              f"Pitch={np.degrees(orientation[1]):.1f}°")
+```
+
+## Exteroceptive Sensors
+
+Exteroceptive sensors provide information about the external environment, including obstacles, objects, surfaces, and humans. These sensors enable robots to navigate safely and interact intelligently with their surroundings.
+
+### Vision Systems
+
+**Monocular Cameras** provide 2D image data. While they don't directly provide depth information, they can be used with computer vision algorithms for:
+- Object recognition and tracking
+- Feature detection and matching
+- Visual odometry
+- Human pose estimation
+
+**Stereo Cameras** use two cameras separated by a known baseline to compute depth through triangulation. They provide 3D point clouds and enable:
+- Depth mapping
+- Obstacle avoidance
+- 3D reconstruction
+- Distance measurement
+
+**Depth Cameras** use various technologies to directly measure depth:
+
+**Time-of-Flight (ToF) Cameras** measure the time it takes for light to travel to objects and back, providing depth maps at high frame rates.
+
+**Structured Light Cameras** project known patterns and analyze their deformation to compute depth, offering high resolution at shorter ranges.
+
+**RGB-D Cameras** combine color images with depth information, providing rich data for perception algorithms.
+
+### Range Finding Sensors
+
+**LiDAR (Light Detection and Ranging)** uses laser pulses to measure distances to objects. LiDAR systems provide:
+
+**2D LiDAR** scans a single plane, creating 2D point clouds useful for:
+- Floor-level navigation
+- Obstacle detection
+- Localization and mapping
+
+**3D LiDAR** scans multiple planes or uses rotating mechanisms to create 3D point clouds, enabling:
+- Comprehensive environment mapping
+- Object detection and tracking
+- Autonomous navigation
+
+**Ultrasonic Sensors** emit sound waves and measure echo return time. They offer:
+- Low-cost distance measurement
+- Robustness to lighting conditions
+- Simple operation
+- Limited range and resolution
+
+### Tactile Sensors
+
+**Pressure Sensors** measure contact force distribution. They enable:
+- Grasp force control
+- Slip detection
+- Texture recognition
+- Safe human interaction
+
+**Force-Sensing Resistors (FSRs)** change resistance with applied force, providing simple, low-cost pressure sensing.
+
+**Capacitive Tactile Sensors** detect changes in capacitance caused by pressure, offering high sensitivity and multi-touch capability.
+
+**Optical Tactile Sensors** use cameras and deformable surfaces to provide rich tactile information, including:
+- Contact shape
+- Force distribution
+- Slip detection
+- Texture analysis
+
+## Sensor Characteristics and Selection
+
+### Performance Metrics
+
+**Resolution**: The smallest detectable change in the measured quantity. Higher resolution provides more detailed information but may increase computational requirements.
+
+**Accuracy**: How close measurements are to true values. Accuracy depends on calibration, environmental conditions, and sensor quality.
+
+**Precision**: Repeatability of measurements. High precision ensures consistent readings even if they're not perfectly accurate.
+
+**Range**: Minimum and maximum measurable values. Sensors must be selected to cover expected operating ranges.
+
+**Bandwidth**: How quickly sensors can respond to changes. High bandwidth is essential for dynamic applications like walking.
+
+**Latency**: Time delay between physical change and sensor output. Low latency is crucial for real-time control.
+
+### Environmental Considerations
+
+**Temperature Range**: Sensors must operate reliably across expected temperature variations.
+
+**Vibration Resistance**: Mobile robots experience significant vibrations that can affect sensor performance.
+
+**Electromagnetic Interference**: Motors and power electronics can interfere with sensitive sensors.
+
+**Lighting Conditions**: Vision systems must handle varying lighting conditions, from bright sunlight to dark environments.
+
+**Weather Protection**: Outdoor robots require weatherproof sensors with appropriate IP ratings.
+
+### Cost and Complexity
+
+**Initial Cost**: Purchase price of sensors and required electronics.
+
+**Integration Cost**: Effort required to integrate sensors into the robot system.
+
+**Calibration Requirements**: Some sensors require frequent calibration to maintain accuracy.
+
+**Computational Requirements**: Processing sensor data may require significant computational resources.
+
+## Sensor Fusion
+
+Sensor fusion combines data from multiple sensors to provide more accurate and robust information than any single sensor could provide alone. This is essential because each sensor type has strengths and weaknesses.
+
+### Kalman Filtering
+
+Kalman filters provide optimal estimates of system state by combining predictions with measurements. They are widely used in robotics for:
+
+- Position and orientation estimation
+- Velocity and acceleration estimation
+- Tracking moving objects
+- Sensor noise reduction
+
+```python
+import numpy as np
+
+class KalmanFilter:
+    """Extended Kalman Filter for sensor fusion"""
+    
+    def __init__(self, state_dim, measurement_dim):
+        # State variables
+        self.state = np.zeros(state_dim)
+        self.covariance = np.eye(state_dim)
+        
+        # Process model
+        self.state_transition = np.eye(state_dim)
+        self.process_noise = np.eye(state_dim) * 0.01
+        
+        # Measurement model
+        self.measurement_matrix = np.zeros((measurement_dim, state_dim))
+        self.measurement_noise = np.eye(measurement_dim) * 0.1
+        
+    def predict(self, control_input=None):
+        """Predict next state using process model"""
+        if control_input is not None:
+            self.state = self.state_transition @ self.state + control_input
+        else:
+            self.state = self.state_transition @ self.state
+            
+        self.covariance = (self.state_transition @ self.covariance @ 
+                          self.state_transition.T + self.process_noise)
+        
+        return self.state
+    
+    def update(self, measurement):
+        """Update state estimate with new measurement"""
+        # Calculate Kalman gain
+        innovation_covariance = (self.measurement_matrix @ self.covariance @ 
+                                self.measurement_matrix.T + self.measurement_noise)
+        kalman_gain = (self.covariance @ self.measurement_matrix.T @ 
+                      np.linalg.inv(innovation_covariance))
+        
+        # Update state and covariance
+        innovation = measurement - self.measurement_matrix @ self.state
+        self.state = self.state + kalman_gain @ innovation
+        self.covariance = ((np.eye(len(self.state)) - kalman_gain @ 
+                           self.measurement_matrix) @ self.covariance)
+        
+        return self.state
+
+# Example: Fusing encoder and IMU data for position estimation
+class RobotPositionEstimator:
+    def __init__(self):
+        # State: [x, y, theta, vx, vy, vtheta]
+        self.kf = KalmanFilter(state_dim=6, measurement_dim=4)
+        
+        # Measurement matrix: [encoder_x, encoder_y, imu_vx, imu_vy]
+        self.kf.measurement_matrix = np.array([
+            [1, 0, 0, 0, 0, 0],  # encoder x position
+            [0, 1, 0, 0, 0, 0],  # encoder y position
+            [0, 0, 0, 1, 0, 0],  # IMU x velocity
+            [0, 0, 0, 0, 1, 0]   # IMU y velocity
+        ])
+        
+    def update(self, encoder_pos, imu_vel, dt):
+        # Predict using constant velocity model
+        self.kf.state_transition = np.array([
+            [1, 0, 0, dt, 0, 0],
+            [0, 1, 0, 0, dt, 0],
+            [0, 0, 1, 0, 0, dt],
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1]
+        ])
+        
+        self.kf.predict()
+        
+        # Combine measurements
+        measurement = np.array([
+            encoder_pos[0], encoder_pos[1],
+            imu_vel[0], imu_vel[1]
+        ])
+        
+        return self.kf.update(measurement)
+
+# Usage example
+estimator = RobotPositionEstimator()
+
+for i in range(10):
+    # Simulated sensor data
+    encoder_pos = [i * 0.1, i * 0.05]  # Position from wheel encoders
+    imu_vel = [0.1, 0.05]  # Velocity from IMU
+    
+    estimated_state = estimator.update(encoder_pos, imu_vel, dt=0.1)
+    print(f"Step {i}: Position ({estimated_state[0]:.3f}, {estimated_state[1]:.3f})")
+```
+
+### Complementary Filtering
+
+Complementary filters combine high-frequency and low-frequency information from different sensors. They are computationally efficient and work well for many applications.
+
+### Particle Filtering
+
+Particle filters use Monte Carlo methods to estimate probability distributions. They are particularly useful for:
+- Localization in known environments
+- Tracking multiple hypotheses
+- Non-linear system models
+
+## Sensor Placement Strategies
+
+### Humanoid Robot Sensor Layout
+
+**Head Sensors**: Vision cameras, microphones, and distance sensors are typically placed in the head to provide a human-like perspective and good vantage point for navigation.
+
+**Body Sensors**: IMUs are placed in the torso to measure overall body orientation and motion. Force sensors may be integrated into the torso for collision detection.
+
+**Joint Sensors**: Encoders and force sensors are placed at each joint to provide precise position and force information for control.
+
+**Hand Sensors**: Tactile sensors, pressure sensors, and force/torque sensors are integrated into hands for manipulation and grasping.
+
+**Foot Sensors**: Force sensors and pressure sensors in feet provide information about contact forces and balance, essential for stable walking.
+
+### Redundancy and Robustness
+
+**Sensor Redundancy**: Critical measurements often use multiple sensors to provide backup in case of failure and improve accuracy through fusion.
+
+**Cross-Validation**: Different sensors can validate each other's measurements, helping detect sensor failures or anomalies.
+
+**Graceful Degradation**: Systems should continue operating with reduced capability when some sensors fail, rather than complete failure.
+
+## Code Examples
+
+### Sensor Data Processing Pipeline
+
+```python
+import numpy as np
+from collections import deque
+
+class SensorProcessor:
+    """Generic sensor data processing pipeline"""
+    
+    def __init__(self, buffer_size=100):
+        self.buffer_size = buffer_size
+        self.data_buffer = deque(maxlen=buffer_size)
+        self.calibration_offset = 0.0
+        self.scale_factor = 1.0
+        
+    def calibrate(self, reference_values):
+        """Calibrate sensor using reference values"""
+        measurements = np.array(list(self.data_buffer))
+        self.calibration_offset = np.mean(reference_values) - np.mean(measurements)
+        self.scale_factor = np.std(reference_values) / np.std(measurements)
+        
+    def add_measurement(self, raw_value):
+        """Add new measurement to buffer"""
+        self.data_buffer.append(raw_value)
+        
+    def get_filtered_value(self, method='moving_average'):
+        """Get filtered sensor reading"""
+        if len(self.data_buffer) == 0:
+            return 0.0
+            
+        measurements = np.array(list(self.data_buffer))
+        
+        if method == 'moving_average':
+            return np.mean(measurements)
+        elif method == 'median':
+            return np.median(measurements)
+        elif method == 'exponential':
+            alpha = 0.1
+            filtered = measurements[0]
+            for value in measurements[1:]:
+                filtered = alpha * value + (1 - alpha) * filtered
+            return filtered
+        else:
+            return measurements[-1]
+            
+    def get_calibrated_value(self, raw_value):
+        """Apply calibration to raw measurement"""
+        return (raw_value + self.calibration_offset) * self.scale_factor
+
+class MultiSensorFusion:
+    """Multi-sensor fusion system"""
+    
+    def __init__(self):
+        self.sensors = {}
+        self.fusion_weights = {}
+        
+    def add_sensor(self, name, sensor_processor, weight=1.0):
+        """Add sensor to fusion system"""
+        self.sensors[name] = sensor_processor
+        self.fusion_weights[name] = weight
+        
+    def get_fused_value(self):
+        """Get fused sensor reading"""
+        if not self.sensors:
+            return 0.0
+            
+        total_weight = sum(self.fusion_weights.values())
+        weighted_sum = 0.0
+        
+        for name, sensor in self.sensors.items():
+            filtered_value = sensor.get_filtered_value()
+            weight = self.fusion_weights[name]
+            weighted_sum += filtered_value * weight
+            
+        return weighted_sum / total_weight
+
+# Example usage for force sensing
+force_sensor = SensorProcessor(buffer_size=50)
+force_sensor.add_measurement(10.1)
+force_sensor.add_measurement(10.3)
+force_sensor.add_measurement(9.9)
+force_sensor.add_measurement(10.2)
+
+filtered_force = force_sensor.get_filtered_value('moving_average')
+print(f"Filtered force: {filtered_force:.2f} N")
+```
+
+### Vision Processing for Object Detection
+
+```python
+import cv2
+import numpy as np
+
+class VisionProcessor:
+    """Computer vision processing for humanoid robots"""
+    
+    def __init__(self):
+        self.camera_matrix = None
+        self.distortion_coeffs = None
+        
+    def calibrate_camera(self, calibration_images):
+        """Calibrate camera using chessboard images"""
+        # Prepare object points
+        objp = np.zeros((6*9, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
+        
+        objpoints = []
+        imgpoints = []
+        
+        for img in calibration_images:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            ret, corners = cv2.findChessboardCorners(gray, (9, 6), None)
+            
+            if ret:
+                objpoints.append(objp)
+                imgpoints.append(corners)
+        
+        # Calibrate camera
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+            objpoints, imgpoints, gray.shape[::-1], None, None
+        )
+        
+        if ret:
+            self.camera_matrix = mtx
+            self.distortion_coeffs = dist
+            
+    def detect_objects(self, image):
+        """Detect objects in image using color and shape"""
+        # Convert to HSV for better color detection
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        
+        # Define color ranges for different objects
+        color_ranges = {
+            'red': [(0, 50, 50), (10, 255, 255)],
+            'green': [(50, 50, 50), (70, 255, 255)],
+            'blue': [(100, 50, 50), (130, 255, 255)]
+        }
+        
+        detected_objects = []
+        
+        for color_name, (lower, upper) in color_ranges.items():
+            # Create mask for color
+            mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
+            
+            # Find contours
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, 
+                                          cv2.CHAIN_APPROX_SIMPLE)
+            
+            for contour in contours:
+                # Filter by area
+                area = cv2.contourArea(contour)
+                if area > 1000:  # Minimum area threshold
+                    # Get bounding box
+                    x, y, w, h = cv2.boundingRect(contour)
+                    
+                    # Calculate center
+                    center_x = x + w // 2
+                    center_y = y + h // 2
+                    
+                    detected_objects.append({
+                        'type': color_name,
+                        'position': (center_x, center_y),
+                        'size': (w, h),
+                        'area': area
+                    })
+                    
+        return detected_objects
+        
+    def estimate_distance(self, object_size, known_size, focal_length):
+        """Estimate distance to object using size"""
+        return (known_size * focal_length) / object_size
+
+# Example usage
+vision = VisionProcessor()
+
+# Simulate object detection
+image = np.zeros((480, 640, 3), dtype=np.uint8)  # Black image
+cv2.rectangle(image, (200, 150), (300, 250), (0, 255, 0), -1)  # Green square
+
+objects = vision.detect_objects(image)
+for obj in objects:
+    print(f"Detected {obj['type']} object at position {obj['position']}")
+```
+
+## Practical Examples
+
+### Humanoid Robot Balance Control
+
+Balance control requires integrating multiple sensor inputs:
+
+1. **IMU Data**: Provides body orientation and angular velocity
+2. **Foot Force Sensors**: Measure center of pressure
+3. **Joint Encoders**: Track joint positions for stability
+4. **Vision**: Detect obstacles and terrain changes
+
+The balance controller fuses these inputs to maintain stability:
+
+```python
+class BalanceController:
+    """Balance controller for humanoid robots"""
+    
+    def __init__(self):
+        self.kp_orientation = 100.0  # Orientation control gain
+        self.kp_cop = 50.0  # Center of pressure control gain
+        self.max_torque = 50.0  # Maximum joint torque
+        
+    def compute_balance_correction(self, imu_data, foot_forces, joint_positions):
+        """Compute joint torques for balance correction"""
+        # Extract orientation from IMU
+        roll, pitch, yaw = imu_data['orientation']
+        
+        # Calculate center of pressure from foot forces
+        cop_x, cop_y = self.calculate_cop(foot_forces)
+        
+        # Compute desired corrections
+        roll_correction = -self.kp_orientation * roll
+        pitch_correction = -self.kp_orientation * pitch
+        
+        # Compute ankle torques for balance
+        left_ankle_torque = roll_correction + pitch_correction
+        right_ankle_torque = roll_correction - pitch_correction
+        
+        # Apply torque limits
+        left_ankle_torque = np.clip(left_ankle_torque, 
+                                    -self.max_torque, self.max_torque)
+        right_ankle_torque = np.clip(right_ankle_torque, 
+                                     -self.max_torque, self.max_torque)
+        
+        return {
+            'left_ankle': left_ankle_torque,
+            'right_ankle': right_ankle_torque
+        }
+        
+    def calculate_cop(self, foot_forces):
+        """Calculate center of pressure from foot force sensors"""
+        # Simplified calculation
+        total_force = sum(foot_forces.values())
+        if total_force == 0:
+            return 0.0, 0.0
+            
+        cop_x = sum(pos[0] * force for pos, force in foot_forces.items()) / total_force
+        cop_y = sum(pos[1] * force for pos, force in foot_forces.items()) / total_force
+        
+        return cop_x, cop_y
+```
+
+## Exercises
+
+### Exercise 1: Sensor Selection Analysis
+Select appropriate sensors for a humanoid robot designed for:
+- Household assistance tasks
+- Industrial manufacturing
+- Search and rescue operations
+
+Justify your choices based on performance requirements, environmental conditions, and cost constraints.
+
+### Exercise 2: Sensor Fusion Implementation
+Implement a sensor fusion system that combines:
+- Wheel encoder position data
+- IMU velocity data
+- Visual odometry from camera
+
+Compare the performance of different fusion algorithms (Kalman filter, complementary filter, particle filter).
+
+### Exercise 3: Sensor Calibration
+Design a calibration procedure for a 6-DOF force/torque sensor. Include:
+- Static calibration with known loads
+- Dynamic calibration with time-varying forces
+- Temperature compensation
+- Validation procedures
+
+### Exercise 4: Fault Detection
+Implement a fault detection system for multiple sensors. The system should:
+- Detect sensor failures or anomalies
+- Identify which sensor has failed
+- Provide alternative estimates using remaining sensors
+- Alert operators about sensor issues
+
+## Summary
+
+Sensors are essential components that enable humanoid robots to perceive themselves and their environment. Proprioceptive sensors provide information about internal state, while exteroceptive sensors reveal the external world. Each sensor type has unique strengths and limitations, making sensor fusion crucial for robust perception.
+
+Modern humanoid robots integrate dozens of sensors, each carefully selected and positioned to provide comprehensive coverage of the robot's operational needs. The challenge lies not just in selecting appropriate sensors, but in processing their data efficiently, fusing information from multiple sources, and maintaining system reliability despite sensor failures or environmental disturbances.
+
+As sensor technology advances, we can expect more capable, compact, and intelligent sensing systems that will enable humanoid robots to operate more effectively in complex, unstructured environments. The future of humanoid robotics depends heavily on continued innovation in sensing technologies and perception algorithms.
+
+## References
+
+[1] Thrun, S., Burgard, W., and Fox, D. "Probabilistic Robotics", MIT Press, 2022. [https://doi.org/10.7551/mitpress/9780262201629.001.0001](https://doi.org/10.7551/mitpress/9780262201629.001.0001)
+
+[2] Szeliski, R. "Computer Vision: Algorithms and Applications", 2nd Edition, Springer, 2022. [https://doi.org/10.1007/978-1-84882-935-0](https://doi.org/10.1007/978-1-84882-935-0)
+
+[3] Bar-Shalom, Y., Li, X.R., and Kirubarajan, T. "Estimation with Applications to Tracking and Navigation", Wiley, 2021. [https://doi.org/10.1002/0471221279](https://doi.org/10.1002/0471221279)
+
+[4] ROS 2 Documentation, "Sensor Messages and Processing", 2025. [https://docs.ros.org/en/rolling/](https://docs.ros.org/en/rolling/)
+
+[5] IEEE Robotics and Automation Society, "Sensor Standards for Robotics", 2024. [https://www.ieee-ras.org/standards](https://www.ieee-ras.org/standards)

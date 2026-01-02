@@ -1,0 +1,295 @@
+---
+title: "Types of Robots"
+sidebar_label: "Types of Robots"
+description: "Comprehensive overview of robot classifications and applications across industries"
+hide_table_of_contents: false
+---
+
+# Types of Robots
+
+## Learning Objectives
+
+- [ ] Identify major robot categories and their defining characteristics
+- [ ] Understand industrial, service, and humanoid robot classifications
+- [ ] Recognize specialized robot types and their unique applications
+- [ ] Appreciate the diversity of robotic systems in modern society
+
+## Introduction
+
+Robots come in many shapes, sizes, and configurations, each designed for specific tasks and environments. Understanding robot classifications helps us appreciate the breadth of robotic applications and how different designs solve particular problems.
+
+## Industrial Robots
+
+### Definition and Characteristics
+
+Industrial robots are automated machines designed for manufacturing and production environments:
+
+- **Precision**: High accuracy and repeatability for consistent quality
+- **Speed**: Fast operation for high-volume production
+- **Durability**: Built for continuous operation in harsh conditions
+- **Programming**: Pre-programmed sequences for specific manufacturing tasks
+
+### Common Types
+
+#### Articulated Arm Robots
+
+Six-axis robotic arms are the workhorses of modern manufacturing:
+
+```python
+# Example: Industrial robot arm control
+import numpy as np
+
+class RobotArm:
+    def __init__(self, joint_limits):
+        self.joint_limits = joint_limits  # [min, max] for each joint
+        self.current_position = np.zeros(6)  # 6 DOF arm
+        
+    def move_to_position(self, target_position):
+        """Move arm to target position using inverse kinematics"""
+        # Simplified inverse kinematics calculation
+        self.current_position = self.ik_solver(target_position)
+        return self.current_position
+    
+    def ik_solver(self, target):
+        """Basic inverse kinematics solver"""
+        # This would use actual IK algorithms in practice
+        return target * 0.8  # Simplified for demonstration
+```
+
+#### Cartesian Coordinate Robots
+
+Also known as gantry robots, these operate on X, Y, Z coordinate systems:
+
+- **Applications**: Large-scale assembly, welding, material handling
+- **Advantages**: Large work envelope, high precision
+- **Limitations**: Restricted to specific workspace geometries
+
+#### SCARA Robots
+
+Selective Compliance Assembly Robot Arms excel at high-speed assembly:
+
+- **Design**: Four-axis motion with cylindrical workspace
+- **Strengths**: Fast operation, high precision for small parts
+- **Uses**: Electronics assembly, pick-and-place operations
+
+### Industrial Applications
+
+#### Automotive Manufacturing
+
+Robots revolutionized car production through:
+
+- **Body Shop**: Welding, painting, and assembly operations
+- **Powertrain**: Engine and transmission assembly
+- **Final Assembly**: Complete vehicle construction with minimal human intervention
+
+#### Electronics Manufacturing
+
+Precision robots enable modern electronics production:
+
+- **Circuit Board Assembly**: Microscopic component placement
+- **Testing and Inspection**: Automated quality control systems
+- **Packaging**: Product preparation for distribution
+
+## Service Robots
+
+### Definition and Evolution
+
+Service robots assist humans in non-manufacturing environments:
+
+- **Interaction**: Direct contact with human users
+- **Adaptability**: Operate in dynamic, unstructured environments
+- **Safety**: Designed for close human proximity operation
+
+### Major Categories
+
+#### Domestic Service Robots
+
+Home assistance robots for everyday tasks:
+
+```cpp
+// Example: Domestic service robot navigation
+#include <iostream>
+#include <vector>
+
+class DomesticRobot {
+private:
+    std::vector<std::string> rooms;
+    std::string current_location;
+    
+public:
+    void addRoom(const std::string& room) {
+        rooms.push_back(room);
+    }
+    
+    bool navigateToRoom(const std::string& target_room) {
+        // Simplified navigation logic
+        for (const auto& room : rooms) {
+            if (room == target_room) {
+                current_location = target_room;
+                std::cout << "Navigated to " << target_room << std::endl;
+                return true;
+            }
+        }
+        return false;
+    }
+};
+```
+
+#### Professional Service Robots
+
+Commercial service robots for business applications:
+
+- **Healthcare**: Assistance in hospitals and elderly care
+- **Hospitality**: Food service, cleaning, and customer assistance
+- **Retail**: Inventory management, customer service, and delivery
+
+#### Field Service Robots
+
+Outdoor and specialized service robots:
+
+- **Agriculture**: Automated harvesting, monitoring, and crop management
+- **Construction**: Building, inspection, and maintenance tasks
+- **Search and Rescue**: Disaster response and hazardous environment operations
+
+## Humanoid Robots
+
+### Defining Characteristics
+
+Humanoid robots mimic human form and behavior:
+
+- **Bipedal Locomotion**: Walking on two legs like humans
+- **Manipulation**: Arms and hands for human-like interaction
+- **Communication**: Speech and natural language understanding
+- **Social Intelligence**: Understanding human social cues and contexts
+
+### Evolution of Humanoid Robots
+
+#### Early Humanoids
+
+Pioneering attempts at human-like machines:
+
+- **WABOT-1 (1973)**: First full-scale humanoid robot in Japan
+- **Honda's E-Series (1980s-1990s)**: Progressive development of walking robots
+- **MIT's Cog (1990s)**: Research platform for human cognition
+
+#### Modern Humanoids
+
+Current state-of-the-art humanoid robots:
+
+- **Boston Dynamics Atlas**: Advanced mobility and manipulation capabilities
+- **Honda ASIMO**: Sophisticated walking, running, and interaction
+- **Tesla Optimus**: Designed for practical household and industrial tasks
+- **Unitree H1**: Research platform for affordable humanoid robotics
+
+### Humanoid Applications
+
+#### Research and Development
+
+Humanoids serve as platforms for advancing robotics:
+
+- **Locomotion Research**: Understanding bipedal walking and balance
+- **AI Integration**: Testing human-robot interaction paradigms
+- **Cognitive Science**: Studying machine intelligence and consciousness
+
+#### Practical Applications
+
+Emerging real-world uses for humanoid robots:
+
+- **Healthcare Assistance**: Elderly care and patient support
+- **Education**: Teaching assistants and interactive learning tools
+- **Entertainment**: Performance and companionship roles
+- **Disaster Response**: Operating in dangerous human environments
+
+## Specialized Robot Types
+
+### Medical Robots
+
+Precision robots for healthcare applications:
+
+- **Surgical Robots**: Da Vinci system for minimally invasive surgery
+- **Rehabilitation Robots**: Assist in patient recovery and therapy
+- **Hospital Automation**: Laboratory automation and medicine dispensing
+
+### Agricultural Robots
+
+Automated systems for farming and food production:
+
+- **Autonomous Tractors**: GPS-guided planting and harvesting
+- **Drone Systems**: Crop monitoring and precision agriculture
+- **Robotic Harvesters**: Automated fruit and vegetable picking
+
+### Educational Robots
+
+Learning and teaching robots:
+
+- **STEM Education**: Programming and engineering education platforms
+- **Language Learning**: Interactive language acquisition tools
+- **Special Needs**: Therapy and assistance for students with disabilities
+
+## Classification Systems
+
+### By Application Domain
+
+Robots can be categorized by their primary use case:
+
+1. **Manufacturing**: Industrial automation and production
+2. **Service**: Human assistance and commercial applications
+3. **Research**: Experimental and development platforms
+4. **Military**: Defense and security applications
+5. **Space**: Extraterrestrial and orbital operations
+
+### By Mobility Type
+
+Classification based on movement capabilities:
+
+1. **Stationary**: Fixed-base robots with limited movement
+2. **Wheeled**: Ground-based mobile platforms
+3. **Tracked**: All-terrain mobility systems
+4. **Legged**: Bipedal and quadrupedal locomotion
+5. **Flying**: Aerial robots and drones
+6. **Swimming**: Underwater and surface marine robots
+
+### By Intelligence Level
+
+Based on autonomy and decision-making capabilities:
+
+1. **Manual**: Direct human control with no autonomy
+2. **Programmable**: Pre-defined sequences and limited adaptation
+3. **Semi-Autonomous**: Limited decision-making with human oversight
+4. **Fully Autonomous**: Independent operation in complex environments
+
+## Future Trends
+
+### Convergence of Technologies
+
+Modern robots increasingly combine multiple capabilities:
+
+- **Sensing**: Advanced perception systems combining vision, touch, and proximity
+- **Intelligence**: Machine learning for adaptation and decision-making
+- **Actuation**: Soft robotics and bio-inspired movement systems
+- **Connectivity**: IoT integration and cloud-based intelligence
+
+### Emerging Categories
+
+New robot types are developing at the intersection of fields:
+
+- **Collaborative Robots**: Safe human-robot teamwork in manufacturing
+- **Nano-robots**: Microscopic robots for medical and research applications
+- **Swarm Robots**: Coordinated behavior of multiple simple robots
+- **Bio-robots**: Living tissue integration with robotic components
+
+## Conclusion
+
+The diversity of robot types reflects the broad range of human needs and technological possibilities. From industrial arms that build our cars to humanoid robots that may one day assist in our homes, each robot type represents a unique solution to specific challenges.
+
+Understanding these classifications helps us appreciate both the current state of robotics and the future directions this field may take. As technology advances, the boundaries between these categories continue to blur, creating robots that combine capabilities from multiple domains.
+
+## References
+
+[1] International Federation of Robotics, "Industrial Robots and Automation", *Industrial Robotics Journal*, 2024. https://ifr.org/downloads/industrial-robots/
+
+[2] IEEE Robotics and Automation Society, "Service Robotics: Classification and Applications", *IEEE Robotics Magazine*, 2023. https://www.ieee-ras.org/publications/robotics-magazine
+
+[3] ROS 2 Documentation, "Robot Classifications and Use Cases", 2025. https://docs.ros.org/en/rolling/
+
+[4] Siciliano, B. and Khatib, O., "Humanoid Robotics: A Reference", *Springer*, 2022. https://www.springer.com/gp/book/9783030807324

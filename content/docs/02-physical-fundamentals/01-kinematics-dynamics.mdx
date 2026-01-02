@@ -1,0 +1,305 @@
+---
+title: "Kinematics and Dynamics"
+sidebar_label: "Kinematics & Dynamics"
+description: "Mathematical foundations of robot motion and force analysis"
+hide_table_of_contents: false
+---
+
+# Kinematics and Dynamics
+
+## Learning Objectives
+
+- [ ] Understand forward and inverse kinematics for robot manipulators
+- [ ] Master dynamic equations for robot motion and force analysis
+- [ ] Apply mathematical concepts to practical robot control problems
+- [ ] Implement basic kinematic and dynamic calculations in code
+
+## Introduction
+
+Kinematics and dynamics form the mathematical foundation of robotics, enabling us to understand, predict, and control robot motion. While these topics can seem abstract, they provide the essential tools for designing robots that move precisely and interact safely with their environment.
+
+## Forward Kinematics
+
+### Basic Concepts
+
+Forward kinematics determines the position and orientation of a robot's end-effector given joint angles:
+
+```python
+import numpy as np
+
+class RobotArm:
+    def __init__(self, link_lengths):
+        """Initialize 2-DOF planar robot arm"""
+        self.L1 = link_lengths[0]  # Length of first link
+        self.L2 = link_lengths[1]  # Length of second link
+        
+    def forward_kinematics(self, theta1, theta2):
+        """Calculate end-effector position from joint angles"""
+        # Position of first joint
+        x1 = self.L1 * np.cos(theta1)
+        y1 = self.L1 * np.sin(theta1)
+        
+        # Position of second joint relative to first
+        x2 = x1 + self.L2 * np.cos(theta1 + theta2)
+        y2 = y1 + self.L2 * np.sin(theta1 + theta2)
+        
+        return x2, y2
+    
+    def get_jacobian(self, theta1, theta2):
+        """Calculate Jacobian matrix for velocity analysis"""
+        J11 = -self.L1 * np.sin(theta1) - self.L2 * np.sin(theta1 + theta2)
+        J12 = -self.L2 * np.sin(theta1 + theta2)
+        J21 = self.L1 * np.cos(theta1) + self.L2 * np.cos(theta1 + theta2)
+        J22 = self.L2 * np.cos(theta1 + theta2)
+        
+        return np.array([[J11, J12], [J21, J22]])
+
+# Example usage
+arm = RobotArm([1.0, 0.8])  # Link lengths in meters
+x, y = arm.forward_kinematics(np.pi/4, np.pi/6)  # 45° and 30°
+print(f"End-effector position: ({x:.3f}, {y:.3f}) meters")
+```
+
+### Applications
+
+Forward kinematics is essential for:
+- **Robot Control**: Converting joint commands to desired positions
+- **Path Planning**: Calculating trajectories for smooth motion
+- **Visualization**: Displaying robot configuration in simulation
+
+## Inverse Kinematics
+
+### Mathematical Foundation
+
+Inverse kinematics solves for joint angles given desired end-effector position:
+
+```python
+def inverse_kinematics_2dof(target_x, target_y, L1, L2):
+    """Solve inverse kinematics for 2-DOF planar arm"""
+    # Distance to target
+    distance = np.sqrt(target_x**2 + target_y**2)
+    
+    # Check if target is reachable
+    if distance > (L1 + L2):
+        raise ValueError("Target out of reach")
+    
+    # Use law of cosines to find angles
+    cos_theta2 = (target_x**2 + target_y**2 - L1**2 - L2**2) / (2 * L1 * L2)
+    
+    if abs(cos_theta2) > 1:
+        # No solution exists
+        return None, None
+    
+    theta2 = np.arccos(cos_theta2)
+    
+    # Calculate theta1 using geometric approach
+    k1 = L1 + L2 * np.cos(theta2)
+    k2 = L2 * np.sin(theta2)
+    theta1 = np.arctan2(target_y, target_x - k1) - np.arctan2(k2, 0)
+    
+    return theta1, theta2
+
+# Example: Find joint angles for target position
+target_x, target_y = 1.2, 0.8
+theta1, theta2 = inverse_kinematics_2dof(target_x, target_y, 1.0, 0.8)
+if theta1 is not None:
+    print(f"Joint angles: θ₁ = {np.degrees(theta1):.1f}°, θ₂ = {np.degrees(theta2):.1f}°")
+```
+
+### Solution Methods
+
+Different approaches to solve inverse kinematics:
+
+1. **Analytical Solutions**: Closed-form equations for simple robots
+2. **Numerical Methods**: Iterative approaches for complex systems
+3. **Optimization**: Minimizing error functions
+4. **Machine Learning**: Neural networks for kinematic mapping
+
+## Robot Dynamics
+
+### Newton-Euler Equations
+
+The fundamental equations governing robot motion:
+
+```python
+class RobotDynamics:
+    def __init__(self, mass, inertia):
+        self.mass = mass  # Robot mass in kg
+        self.inertia = inertia  # Moment of inertia in kg⋅m²
+        
+    def calculate_torque(self, angular_acceleration):
+        """Calculate required torque for angular acceleration"""
+        # τ = I⋅α (torque = moment of inertia × angular acceleration)
+        return self.inertia * angular_acceleration
+    
+    def calculate_angular_acceleration(self, torque):
+        """Calculate angular acceleration from applied torque"""
+        # α = τ/I (angular acceleration = torque / moment of inertia)
+        return torque / self.inertia
+
+# Example: Dynamics of a rotating joint
+dynamics = RobotDynamics(mass=5.0, inertia=0.2)
+torque = dynamics.calculate_torque(angular_acceleration=2.0)  # 2 rad/s²
+print(f"Required torque: {torque:.2f} N⋅m")
+```
+
+### Lagrangian Mechanics
+
+Advanced method for complex robot systems:
+
+```python
+def lagrangian_equations(q, q_dot, L, K):
+    """Generate equations of motion using Lagrangian mechanics"""
+    # L = T - V (Kinetic - Potential energy)
+    # Equations: d/dt(∂L/∂q̇) - ∂L/∂q = 0
+    
+    # For simplified 1-DOF system:
+    # M(q)q̈ + C(q,q̇)q̇ + Kq = 0
+    
+    # Where M is mass matrix, C is Coriolis matrix, K is stiffness matrix
+    pass  # Implementation would depend on specific system
+```
+
+## Practical Applications
+
+### Robot Arm Control
+
+Applying kinematics and dynamics to real robot control:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+class RobotController {
+private:
+    std::vector<double> joint_angles;
+    std::vector<double> joint_velocities;
+    
+public:
+    void updateKinematics() {
+        // Update end-effector position
+        double x = L1 * cos(joint_angles[0]) + L2 * cos(joint_angles[0] + joint_angles[1]);
+        double y = L1 * sin(joint_angles[0]) + L2 * sin(joint_angles[0] + joint_angles[1]);
+        
+        std::cout << "End-effector position: (" << x << ", " << y << ")" << std::endl;
+    }
+    
+    void updateDynamics(double torque) {
+        // Update joint velocities using dynamics
+        double angular_acceleration = torque / INERTIA;
+        joint_velocities[0] += angular_acceleration * TIME_STEP;
+        
+        // Integrate to get new positions
+        joint_angles[0] += joint_velocities[0] * TIME_STEP;
+        joint_angles[1] += joint_velocities[1] * TIME_STEP;
+    }
+};
+```
+
+### Simulation Integration
+
+Testing kinematics and dynamics in simulation environments:
+
+```python
+# ROS2 node for robot kinematics
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Point
+
+class KinematicsNode(Node):
+    def __init__(self):
+        super().__init__('kinematics_node')
+        self.publisher = self.create_publisher(Point, 'end_effector_position')
+        
+    def calculate_position(self, joint_angles):
+        # Implement forward kinematics
+        x, y = self.forward_kinematics(joint_angles)
+        return Point(x=x, y=y)
+    
+    def timer_callback(self):
+        # Publish end-effector position
+        position = self.calculate_position(self.current_joint_angles)
+        self.publisher.publish(position)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = KinematicsNode()
+    rclpy.spin(node)
+
+if __name__ == '__main__':
+    main()
+```
+
+## Advanced Topics
+
+### Workspace Analysis
+
+Understanding robot capabilities and limitations:
+
+```python
+def calculate_workspace(link_lengths, joint_limits):
+    """Calculate reachable workspace of robot arm"""
+    # Generate grid of points
+    workspace_points = []
+    
+    for theta1 in np.linspace(joint_limits[0][0], joint_limits[0][1], 100):
+        for theta2 in np.linspace(joint_limits[1][0], joint_limits[1][1], 100):
+            x, y = forward_kinematics(theta1, theta2, link_lengths)
+            workspace_points.append([x, y])
+    
+    return np.array(workspace_points)
+
+# Visualize workspace
+import matplotlib.pyplot as plt
+
+workspace = calculate_workspace([1.0, 0.8], [(-np.pi, np.pi), (-np.pi, np.pi)])
+plt.scatter(workspace_points[:, 0], workspace_points[:, 1], s=1)
+plt.title('Robot Arm Workspace')
+plt.xlabel('X Position (m)')
+plt.ylabel('Y Position (m)')
+plt.grid(True)
+plt.axis('equal')
+plt.show()
+```
+
+### Singularities
+
+Identifying and handling special configurations:
+
+```python
+def check_singularity(jacobian):
+    """Check if robot is in singular configuration"""
+    # Calculate determinant of Jacobian
+    det = np.linalg.det(jacobian)
+    
+    if abs(det) < SINGULARITY_THRESHOLD:
+        return True, det
+    return False, det
+
+def handle_singularity(joint_angles):
+    """Modify joint angles to avoid singularity"""
+    # Add small perturbation to escape singularity
+    return joint_angles + SINGULARITY_AVOIDANCE * np.random.randn(len(joint_angles))
+```
+
+## Summary
+
+Kinematics and dynamics provide the mathematical foundation for understanding robot motion:
+
+- **Forward Kinematics**: Predicts end-effector position from joint angles
+- **Inverse Kinematics**: Calculates joint angles for desired positions
+- **Dynamics**: Analyzes forces and torques required for motion
+- **Applications**: Essential for robot control, simulation, and design
+
+These mathematical tools enable precise robot control and are fundamental to advanced robotics applications. Understanding both the theory and practical implementation prepares you for designing and controlling sophisticated robotic systems.
+
+## References
+
+[1] Siciliano, B. and Khatib, O., "Springer Handbook of Robotics", *Springer*, 2016. https://www.springer.com/gp/book/9783319038555
+
+[2] Craig, J.J., "Introduction to Robotics: Mechanics and Control", *Pearson*, 2022. https://www.pearson.com/en-us/subject-catalog/p/craig-introduction-to-robotics-mechanics-and-control-4th-edition/
+
+[3] Spong, M.W. et al., "Robot Modeling and Control", *Wiley*, 2020. https://www.wiley.com/en-us/Robot+Modeling+and+Control-p-9781119544774
+
+[4] ROS 2 Documentation, "Robot State and Kinematics", 2025. https://docs.ros.org/en/rolling/Tutorials/Intermediate/Robot-State-and-Kinematics/

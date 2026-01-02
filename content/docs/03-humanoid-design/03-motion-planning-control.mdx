@@ -1,0 +1,149 @@
+---
+sidebar_position: 3
+---
+
+# Motion Planning and Control
+
+Motion planning is a critical aspect of humanoid robotics that enables robots to navigate complex environments and perform sophisticated tasks. This chapter explores the fundamental concepts and algorithms that allow humanoid robots to plan and execute movements safely and efficiently.
+
+## Overview
+
+Humanoid robots must coordinate multiple degrees of freedom while maintaining balance and avoiding obstacles. Motion planning involves:
+
+- **Path Planning**: Finding collision-free trajectories from start to goal positions
+- **Trajectory Generation**: Creating smooth, time-parameterized paths
+- **Kinematic Constraints**: Ensuring movements respect joint limits and robot geometry
+- **Dynamic Stability**: Maintaining balance throughout planned motions
+
+## Key Concepts
+
+### Configuration Space
+
+The configuration space (C-space) represents all possible positions and orientations of a robot. For humanoid robots, this is a high-dimensional space that includes:
+
+- Joint angles for all degrees of freedom
+- Base position and orientation in 3D space
+- Contact points with the environment
+
+### Sampling-Based Planning
+
+Modern motion planners often use sampling-based approaches:
+
+- **RRT (Rapidly-exploring Random Trees)**: Efficiently explores high-dimensional spaces
+- **PRM (Probabilistic Roadmaps)**: Creates networks of feasible paths
+- **RRT***: Optimizes paths found by RRT for shorter, smoother trajectories
+
+### Whole-Body Motion Planning
+
+Humanoid robots require whole-body planning approaches that coordinate:
+
+- **Leg movements** for locomotion
+- **Arm movements** for manipulation
+- **Torso adjustments** for balance
+- **Head movements** for perception
+
+## Planning Algorithms
+
+### 1. RRT Connect
+
+RRT Connect grows two trees simultaneously from start and goal positions:
+
+```python
+def rrt_connect(start, goal, max_iterations):
+    tree_start = Tree(start)
+    tree_goal = Tree(goal)
+    
+    for i in range(max_iterations):
+        # Sample random configuration
+        random_config = sample_configuration()
+        
+        # Extend both trees
+        new_start = tree_start.extend(random_config)
+        new_goal = tree_goal.extend(random_config)
+        
+        # Check for connection
+        if can_connect(new_start, new_goal):
+            return combine_paths(tree_start.path_to(new_start), 
+                             tree_goal.path_to(new_goal))
+    
+    return None  # No path found
+```
+
+### 2. Optimization-Based Planning
+
+Optimization approaches formulate motion planning as constrained optimization:
+
+- **Objective functions**: Minimize path length, execution time, or energy
+- **Constraints**: Joint limits, collision avoidance, balance requirements
+- **Methods**: Sequential Quadratic Programming (SQP), interior point methods
+
+## Dynamic Motion Planning
+
+### Considerations
+
+Dynamic motion planning must account for:
+
+- **Velocity and acceleration limits** of joints
+- **Ground reaction forces** during locomotion
+- **Center of mass dynamics** for stability
+- **Impact forces** during foot contact
+
+### Zero Moment Point (ZMP) Planning
+
+ZMP-based planning ensures dynamic stability:
+
+- **ZMP trajectory**: Plan the path of the zero moment point
+- **Footstep planning**: Determine where and when to place feet
+- **Center of mass trajectory**: Plan COM motion to maintain ZMP constraints
+
+## Applications
+
+### Walking Gaits
+
+Motion planning enables various walking patterns:
+
+- **Static walking**: Maintains balance at all times
+- **Dynamic walking**: Uses controlled falling and recovery
+- **Stair climbing**: Plans foot placements on uneven terrain
+- **Obstacle avoidance**: Navigates around obstacles in the path
+
+### Manipulation Tasks
+
+For manipulation, motion planning coordinates:
+
+- **Reachable workspace**: Determines what objects can be accessed
+- **Grasp planning**: Plans hand configurations for object manipulation
+- **Dual-arm coordination**: Plans synchronized movements of both arms
+- **Hand-eye coordination**: Aligns visual perception with hand movements
+
+## Challenges and Future Directions
+
+### Computational Complexity
+
+High-dimensional spaces make planning computationally expensive:
+
+- **Curse of dimensionality**: Planning time grows exponentially with DOF
+- **Real-time requirements**: Must plan quickly for responsive behavior
+- **Memory constraints**: Large configuration spaces require significant storage
+
+### Learning-Based Approaches
+
+Machine learning offers new possibilities:
+
+- **Imitation learning**: Learn motions from human demonstrations
+- **Reinforcement learning**: Optimize motions through trial and error
+- **Neural motion primitives**: Compact representations of complex movements
+
+### Human-Robot Interaction
+
+Future systems must plan for:
+
+- **Collaborative tasks**: Coordinate movements with human partners
+- **Predictive planning**: Anticipate human intentions and actions
+- **Safety constraints**: Ensure safe operation near humans
+
+## Conclusion
+
+Motion planning and control are fundamental capabilities that enable humanoid robots to operate effectively in complex environments. As algorithms improve and computational power increases, we can expect more sophisticated and natural robot movements that blur the line between artificial and biological motion.
+
+The integration of planning algorithms, dynamic control, and learning approaches will be key to achieving truly capable humanoid robots that can work alongside humans in everyday environments.

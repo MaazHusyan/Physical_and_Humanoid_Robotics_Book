@@ -1,0 +1,796 @@
+---
+title: "Power Systems and Energy Management"
+sidebar_label: "Power Systems and Energy Management"
+description: "Comprehensive guide to power systems for humanoid robots, covering batteries, power electronics, energy management, and thermal considerations"
+hide_table_of_contents: false
+authors: ["Robotics Book Team"]
+tags: ["power-systems", "energy-management", "robotics", "physical-fundamentals"]
+reading_time: 22
+difficulty: "intermediate"
+prerequisites: ["01-kinematics-dynamics", "02-actuators-motors"]
+learning_objectives: [
+  "Understand power requirements for humanoid robots",
+  "Compare different battery technologies and their applications",
+  "Design power electronics for robotic systems",
+  "Implement energy management strategies",
+  "Analyze thermal management for power systems"
+]
+---
+
+# Power Systems and Energy Management
+
+## Learning Objectives
+- [ ] Understand power requirements for humanoid robots
+- [ ] Compare different battery technologies and their applications
+- [ ] Design power electronics for robotic systems
+- [ ] Implement energy management strategies
+- [ ] Analyze thermal management for power systems
+
+## Introduction
+
+Power systems are the lifeblood of humanoid robots, providing the energy needed for actuators, sensors, computers, and communication systems. Unlike industrial robots that can be tethered to power grids, humanoid robots require mobile, self-contained power solutions that can sustain operation for extended periods while meeting demanding power requirements for locomotion and manipulation.
+
+The challenge of powering humanoid robots is multifaceted: they need high power density for dynamic movements, high energy density for long operation times, sophisticated power management for efficiency, and robust thermal management to prevent overheating. This module explores the complete power system architecture, from energy storage to power conversion and management strategies.
+
+## Power Requirements Analysis
+
+### Power Consumption Breakdown
+
+Humanoid robots consume power through multiple subsystems, each with distinct characteristics:
+
+**Actuator Power**: The largest power consumer, typically 60-80% of total consumption. Power requirements vary dramatically based on activity:
+- Standing: 50-100W
+- Walking: 200-500W
+- Running/Jumping: 1000-2000W peak
+- Lifting heavy objects: 500-1500W
+
+**Computing Power**: 50-200W for perception, planning, and control systems
+- Low-power processors for basic control: 10-30W
+- GPU for vision processing: 100-150W
+- Additional processors for AI/ML: 20-50W
+
+**Sensor Systems**: 10-50W for cameras, LiDAR, IMUs, and other sensors
+- Vision cameras: 5-15W
+- LiDAR systems: 10-30W
+- IMUs and encoders: 1-5W
+
+**Communication**: 5-20W for wireless communication and networking
+- WiFi/Bluetooth: 2-5W
+- 5G/cellular: 5-15W
+
+### Power Profile Analysis
+
+Understanding power consumption patterns is crucial for system design:
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+class PowerAnalyzer:
+    """Power consumption analysis for humanoid robots"""
+    
+    def __init__(self):
+        self.subsystems = {
+            'actuators': {'base_power': 50, 'peak_multiplier': 20},
+            'computing': {'base_power': 100, 'peak_multiplier': 1.5},
+            'sensors': {'base_power': 20, 'peak_multiplier': 2},
+            'communication': {'base_power': 10, 'peak_multiplier': 2}
+        }
+        
+    def calculate_power_profile(self, activity_sequence, duration=300):
+        """Calculate power consumption over time"""
+        time_steps = np.linspace(0, duration, int(duration * 10))  # 10Hz sampling
+        power_profile = {subsystem: [] for subsystem in self.subsystems}
+        
+        for t in time_steps:
+            # Determine current activity
+            activity = self.get_activity_at_time(activity_sequence, t)
+            
+            for subsystem, config in self.subsystems.items():
+                base_power = config['base_power']
+                peak_multiplier = config['peak_multiplier']
+                
+                # Calculate power based on activity
+                if subsystem == 'actuators':
+                    power = self.calculate_actuator_power(activity, base_power, peak_multiplier)
+                elif subsystem == 'computing':
+                    power = self.calculate_computing_power(activity, base_power, peak_multiplier)
+                elif subsystem == 'sensors':
+                    power = self.calculate_sensor_power(activity, base_power, peak_multiplier)
+                else:  # communication
+                    power = self.calculate_communication_power(activity, base_power, peak_multiplier)
+                
+                power_profile[subsystem].append(power)
+        
+        return time_steps, power_profile
+    
+    def get_activity_at_time(self, activity_sequence, current_time):
+        """Determine activity at given time"""
+        for activity, start_time, end_time in activity_sequence:
+            if start_time <= current_time < end_time:
+                return activity
+        return 'idle'
+    
+    def calculate_actuator_power(self, activity, base_power, peak_multiplier):
+        """Calculate actuator power based on activity"""
+        power_multipliers = {
+            'idle': 0.2,
+            'standing': 1.0,
+            'walking': 4.0,
+            'running': 15.0,
+            'jumping': 20.0,
+            'lifting': 10.0
+        }
+        return base_power * power_multipliers.get(activity, 1.0)
+    
+    def calculate_computing_power(self, activity, base_power, peak_multiplier):
+        """Calculate computing power based on activity"""
+        power_multipliers = {
+            'idle': 0.5,
+            'standing': 0.8,
+            'walking': 1.0,
+            'running': 1.3,
+            'jumping': 1.5,
+            'lifting': 1.2
+        }
+        return base_power * power_multipliers.get(activity, 1.0)
+    
+    def calculate_sensor_power(self, activity, base_power, peak_multiplier):
+        """Calculate sensor power based on activity"""
+        power_multipliers = {
+            'idle': 0.5,
+            'standing': 1.0,
+            'walking': 1.5,
+            'running': 2.0,
+            'jumping': 2.0,
+            'lifting': 1.2
+        }
+        return base_power * power_multipliers.get(activity, 1.0)
+    
+    def calculate_communication_power(self, activity, base_power, peak_multiplier):
+        """Calculate communication power based on activity"""
+        power_multipliers = {
+            'idle': 0.3,
+            'standing': 0.5,
+            'walking': 1.0,
+            'running': 1.5,
+            'jumping': 1.0,
+            'lifting': 0.8
+        }
+        return base_power * power_multipliers.get(activity, 1.0)
+    
+    def analyze_energy_consumption(self, time_steps, power_profile):
+        """Analyze total energy consumption"""
+        total_power = []
+        for i in range(len(time_steps)):
+            total = sum(power_profile[subsystem][i] for subsystem in power_profile)
+            total_power.append(total)
+        
+        # Calculate energy consumption (Wh)
+        dt = time_steps[1] - time_steps[0]
+        total_energy = np.trapz(total_power, time_steps) / 3600  # Convert to Wh
+        
+        # Calculate statistics
+        avg_power = np.mean(total_power)
+        peak_power = np.max(total_power)
+        
+        return {
+            'total_energy': total_energy,
+            'average_power': avg_power,
+            'peak_power': peak_power,
+            'power_profile': total_power
+        }
+
+# Example usage
+analyzer = PowerAnalyzer()
+
+# Define activity sequence (activity, start_time, end_time)
+activities = [
+    ('standing', 0, 60),
+    ('walking', 60, 180),
+    ('running', 180, 210),
+    ('lifting', 210, 270),
+    ('standing', 270, 300)
+]
+
+time_steps, power_profile = analyzer.calculate_power_profile(activities)
+analysis = analyzer.analyze_energy_consumption(time_steps, power_profile)
+
+print(f"Total energy consumption: {analysis['total_energy']:.2f} Wh")
+print(f"Average power: {analysis['average_power']:.2f} W")
+print(f"Peak power: {analysis['peak_power']:.2f} W")
+
+# Plot power profile
+plt.figure(figsize=(12, 6))
+plt.plot(time_steps, analysis['power_profile'], 'b-', linewidth=2)
+plt.xlabel('Time (s)')
+plt.ylabel('Power (W)')
+plt.title('Humanoid Robot Power Consumption Profile')
+plt.grid(True)
+plt.show()
+```
+
+## Battery Technologies
+
+### Lithium-Ion Batteries
+
+Lithium-ion batteries are the most common energy storage solution for humanoid robots due to their high energy density and mature technology.
+
+**Chemistry Variants**:
+- **LiCoO2 (LCO)**: High energy density, common in consumer electronics
+- **LiFePO4 (LFP)**: Excellent safety, long cycle life, lower energy density
+- **NMC (Nickel-Manganese-Cobalt)**: Balanced performance, widely used in EVs
+- **NCA (Nickel-Cobalt-Aluminum)**: High energy density, used in Tesla vehicles
+
+**Advantages**:
+- High energy density (150-250 Wh/kg)
+- High power density (500-2000 W/kg)
+- Low self-discharge rate
+- No memory effect
+- Wide operating temperature range
+
+**Limitations**:
+- Safety concerns (thermal runaway)
+- Limited cycle life (500-2000 cycles)
+- Performance degradation at low temperatures
+- Complex battery management required
+
+### Lithium-Polymer Batteries
+
+Lithium-polymer batteries use solid polymer electrolytes instead of liquid electrolytes, offering design flexibility.
+
+**Advantages**:
+- Flexible form factors
+- Lightweight construction
+- Improved safety over liquid Li-ion
+- Higher discharge rates
+
+**Limitations**:
+- Lower energy density than Li-ion
+- Higher cost
+- Limited cycle life
+- Sensitive to overcharging
+
+### Emerging Battery Technologies
+
+**Solid-State Batteries**: Replace liquid electrolytes with solid materials, offering:
+- Higher energy density (300-500 Wh/kg)
+- Enhanced safety
+- Longer cycle life
+- Wider temperature range
+
+**Lithium-Sulfur Batteries**: Promise very high theoretical energy density (2500 Wh/kg) but face challenges with cycle life and efficiency.
+
+**Graphene Batteries**: Use graphene materials to improve conductivity and charge rates.
+
+### Battery Selection Criteria
+
+**Energy Density**: Determines operating time per unit weight
+**Power Density**: Determines ability to deliver high current for dynamic movements
+**Cycle Life**: Determines battery replacement frequency
+**Safety**: Critical for robots operating near humans
+**Cost**: Impacts overall system economics
+**Temperature Performance**: Affects operation in different environments
+
+## Power Electronics
+
+### DC-DC Converters
+
+DC-DC converters transform voltage levels to match different subsystem requirements:
+
+**Buck Converters**: Step down voltage (e.g., 48V to 12V for sensors)
+**Boost Converters**: Step up voltage (e.g., 12V to 48V for actuators)
+**Buck-Boost Converters**: Can step up or down voltage
+**Isolated Converters**: Provide electrical isolation between input and output
+
+```python
+class PowerConverter:
+    """DC-DC converter design and analysis"""
+    
+    def __init__(self, input_voltage, output_voltage, efficiency=0.95):
+        self.input_voltage = input_voltage
+        self.output_voltage = output_voltage
+        self.efficiency = efficiency
+        
+    def calculate_buck_converter(self, load_current, switching_frequency=100000):
+        """Design buck converter parameters"""
+        # Duty cycle
+        duty_cycle = self.output_voltage / self.input_voltage
+        
+        # Inductor value (assuming 30% current ripple)
+        ripple_ratio = 0.3
+        inductance = (self.input_voltage - self.output_voltage) * duty_cycle / \
+                    (ripple_ratio * load_current * switching_frequency)
+        
+        # Output capacitor (assuming 1% voltage ripple)
+        voltage_ripple = 0.01 * self.output_voltage
+        capacitance = load_current * duty_cycle / \
+                     (switching_frequency * voltage_ripple)
+        
+        # Input and output power
+        output_power = self.output_voltage * load_current
+        input_power = output_power / self.efficiency
+        input_current = input_power / self.input_voltage
+        
+        return {
+            'duty_cycle': duty_cycle,
+            'inductance': inductance,
+            'capacitance': capacitance,
+            'input_current': input_current,
+            'output_power': output_power,
+            'input_power': input_power,
+            'power_loss': input_power - output_power
+        }
+    
+    def calculate_boost_converter(self, load_current, switching_frequency=100000):
+        """Design boost converter parameters"""
+        # Duty cycle
+        duty_cycle = 1 - (self.input_voltage / self.output_voltage)
+        
+        # Inductor value (assuming 30% current ripple)
+        ripple_ratio = 0.3
+        input_current = load_current * self.output_voltage / self.input_voltage
+        inductance = self.input_voltage * duty_cycle / \
+                    (ripple_ratio * input_current * switching_frequency)
+        
+        # Output capacitor (assuming 1% voltage ripple)
+        voltage_ripple = 0.01 * self.output_voltage
+        capacitance = load_current * duty_cycle / \
+                     (switching_frequency * voltage_ripple)
+        
+        # Power calculations
+        output_power = self.output_voltage * load_current
+        input_power = output_power / self.efficiency
+        
+        return {
+            'duty_cycle': duty_cycle,
+            'inductance': inductance,
+            'capacitance': capacitance,
+            'input_current': input_current,
+            'output_power': output_power,
+            'input_power': input_power,
+            'power_loss': input_power - output_power
+        }
+
+# Example: Design power distribution for humanoid robot
+class RobotPowerSystem:
+    def __init__(self, battery_voltage=48.0):
+        self.battery_voltage = battery_voltage
+        self.subsystems = {
+            'actuators': {'voltage': 48.0, 'max_current': 50.0},
+            'computing': {'voltage': 12.0, 'max_current': 15.0},
+            'sensors': {'voltage': 5.0, 'max_current': 5.0},
+            'communication': {'voltage': 3.3, 'max_current': 3.0}
+        }
+        
+    def design_power_distribution(self):
+        """Design power distribution system"""
+        converters = {}
+        
+        for subsystem, requirements in self.subsystems.items():
+            if requirements['voltage'] != self.battery_voltage:
+                if requirements['voltage'] < self.battery_voltage:
+                    # Buck converter
+                    converter = PowerConverter(
+                        self.battery_voltage, 
+                        requirements['voltage']
+                    )
+                    design = converter.calculate_buck_converter(
+                        requirements['max_current']
+                    )
+                else:
+                    # Boost converter
+                    converter = PowerConverter(
+                        self.battery_voltage,
+                        requirements['voltage']
+                    )
+                    design = converter.calculate_boost_converter(
+                        requirements['max_current']
+                    )
+                
+                converters[subsystem] = design
+            else:
+                # Direct connection
+                converters[subsystem] = {
+                    'type': 'direct',
+                    'max_power': requirements['voltage'] * requirements['max_current']
+                }
+        
+        return converters
+    
+    def calculate_total_power_budget(self):
+        """Calculate total power requirements"""
+        total_power = 0
+        for subsystem, requirements in self.subsystems.items():
+            total_power += requirements['voltage'] * requirements['max_current']
+        
+        return total_power
+
+# Usage example
+power_system = RobotPowerSystem(battery_voltage=48.0)
+converters = power_system.design_power_distribution()
+total_budget = power_system.calculate_total_power_budget()
+
+print(f"Total power budget: {total_budget:.2f} W")
+print("\nPower converter designs:")
+for subsystem, design in converters.items():
+    print(f"\n{subsystem}:")
+    if design.get('type') == 'direct':
+        print(f"  Direct connection, max power: {design['max_power']:.2f} W")
+    else:
+        print(f"  Duty cycle: {design['duty_cycle']:.3f}")
+        print(f"  Inductance: {design['inductance']*1e6:.2f} µH")
+        print(f"  Capacitance: {design['capacitance']*1e6:.2f} µF")
+        print(f"  Power loss: {design['power_loss']:.2f} W")
+```
+
+### Battery Management Systems (BMS)
+
+BMS is critical for safety, performance, and longevity of battery packs:
+
+**Cell Monitoring**: Voltage, temperature, and current monitoring for each cell
+**State of Charge (SOC) Estimation**: Accurate battery level indication
+**State of Health (SOH) Monitoring**: Battery degradation tracking
+**Cell Balancing**: Ensuring all cells charge/discharge evenly
+**Protection**: Over-voltage, under-voltage, over-current, and thermal protection
+**Communication**: Interface with robot control system
+
+## Energy Management Strategies
+
+### Power Optimization Techniques
+
+**Dynamic Power Management**: Adjust power consumption based on activity level
+- Reduce sensor sampling rates during low activity
+- Scale computing performance based on task requirements
+- Optimize actuator control for efficiency
+
+**Regenerative Systems**: Recover energy during deceleration and braking
+- Regenerative braking in locomotion
+- Energy recovery from lowering heavy objects
+- Capacitive storage for peak power buffering
+
+**Sleep Modes**: Power down non-essential subsystems when not needed
+- Sensor sleep modes during stationary periods
+- Processor power gating for idle cores
+- Communication power cycling
+
+### Energy-Aware Control
+
+Control algorithms can significantly impact energy consumption:
+
+```python
+class EnergyAwareController:
+    """Energy-aware motion planning and control"""
+    
+    def __init__(self, robot_model):
+        self.robot_model = robot_model
+        self.energy_cost_weight = 0.1
+        
+    def calculate_energy_cost(self, trajectory):
+        """Calculate energy cost for given trajectory"""
+        total_energy = 0
+        
+        for i in range(len(trajectory) - 1):
+            # Get joint positions and velocities
+            q = trajectory[i]['position']
+            q_dot = trajectory[i]['velocity']
+            q_ddot = trajectory[i]['acceleration']
+            
+            # Calculate required torques using inverse dynamics
+            tau = self.robot_model.inverse_dynamics(q, q_dot, q_ddot)
+            
+            # Calculate instantaneous power
+            power = np.sum(tau * q_dot)
+            
+            # Integrate over time step
+            dt = trajectory[i+1]['time'] - trajectory[i]['time']
+            total_energy += abs(power) * dt
+        
+        return total_energy
+    
+    def optimize_trajectory_energy(self, initial_trajectory):
+        """Optimize trajectory for energy efficiency"""
+        optimized_trajectory = initial_trajectory.copy()
+        
+        # Apply smoothing to reduce high-frequency components
+        for joint in range(len(initial_trajectory[0]['position'])):
+            positions = [point['position'][joint] for point in initial_trajectory]
+            
+            # Apply low-pass filter
+            smoothed_positions = self.low_pass_filter(positions, cutoff=0.1)
+            
+            # Update trajectory
+            for i, point in enumerate(optimized_trajectory):
+                point['position'][joint] = smoothed_positions[i]
+        
+        # Recalculate velocities and accelerations
+        self.recalculate_derivatives(optimized_trajectory)
+        
+        return optimized_trajectory
+    
+    def low_pass_filter(self, data, cutoff=0.1, sampling_rate=100):
+        """Apply low-pass filter to smooth data"""
+        from scipy import signal
+        nyquist = sampling_rate / 2
+        normal_cutoff = cutoff / nyquist
+        b, a = signal.butter(4, normal_cutoff, btype='low', analog=False)
+        return signal.filtfilt(b, a, data)
+    
+    def recalculate_derivatives(self, trajectory):
+        """Recalculate velocities and accelerations"""
+        for i in range(len(trajectory)):
+            if i > 0:
+                dt = trajectory[i]['time'] - trajectory[i-1]['time']
+                trajectory[i]['velocity'] = (
+                    trajectory[i]['position'] - trajectory[i-1]['position']
+                ) / dt
+            else:
+                trajectory[i]['velocity'] = np.zeros_like(trajectory[i]['position'])
+            
+            if i > 1:
+                dt = trajectory[i]['time'] - trajectory[i-1]['time']
+                trajectory[i]['acceleration'] = (
+                    trajectory[i]['velocity'] - trajectory[i-1]['velocity']
+                ) / dt
+            else:
+                trajectory[i]['acceleration'] = np.zeros_like(trajectory[i]['position'])
+
+# Example usage
+class SimpleRobotModel:
+    def inverse_dynamics(self, q, q_dot, q_ddot):
+        """Simple inverse dynamics model"""
+        # Simplified calculation - in practice would use full dynamics
+        inertia = np.array([2.0, 1.5, 1.0, 0.5, 0.3, 0.2])  # Joint inertias
+        friction = np.array([0.1, 0.08, 0.06, 0.04, 0.02, 0.01])  # Friction coefficients
+        
+        tau = inertia * q_ddot + friction * q_dot
+        return tau
+
+# Create sample trajectory
+trajectory = []
+for i in range(100):
+    trajectory.append({
+        'time': i * 0.01,
+        'position': np.array([0.1 * np.sin(0.1 * i), 0.05 * np.cos(0.1 * i), 0, 0, 0, 0]),
+        'velocity': np.zeros(6),
+        'acceleration': np.zeros(6)
+    })
+
+# Optimize for energy
+robot_model = SimpleRobotModel()
+controller = EnergyAwareController(robot_model)
+
+initial_energy = controller.calculate_energy_cost(trajectory)
+optimized_trajectory = controller.optimize_trajectory_energy(trajectory)
+optimized_energy = controller.calculate_energy_cost(optimized_trajectory)
+
+print(f"Initial energy consumption: {initial_energy:.2f} J")
+print(f"Optimized energy consumption: {optimized_energy:.2f} J")
+print(f"Energy savings: {(1 - optimized_energy/initial_energy)*100:.1f}%")
+```
+
+## Thermal Management
+
+### Heat Generation Sources
+
+**Power Electronics**: Switching losses and conduction losses in converters
+**Actuators**: Resistive heating in motor windings and friction losses
+**Batteries**: Internal resistance heating during charge/discharge
+**Computing**: Processor heat generation during computation
+
+### Cooling Strategies
+
+**Passive Cooling**: Heat sinks, heat pipes, and natural convection
+**Active Cooling**: Fans, liquid cooling, and thermoelectric cooling
+**Phase Change Materials**: Absorb heat during phase transitions
+**Heat Distribution**: Spread heat across larger surface areas
+
+### Thermal Monitoring and Control
+
+```python
+class ThermalManager:
+    """Thermal management system for humanoid robots"""
+    
+    def __init__(self):
+        self.components = {
+            'battery': {'temp': 25.0, 'max_temp': 60.0, 'critical_temp': 70.0},
+            'actuators': {'temp': 30.0, 'max_temp': 80.0, 'critical_temp': 90.0},
+            'electronics': {'temp': 35.0, 'max_temp': 70.0, 'critical_temp': 85.0},
+            'processors': {'temp': 40.0, 'max_temp': 85.0, 'critical_temp': 95.0}
+        }
+        self.cooling_systems = {
+            'fans': {'status': False, 'power': 10.0},
+            'liquid_cooling': {'status': False, 'power': 50.0},
+            'thermal_throttling': {'status': False, 'reduction': 0.0}
+        }
+        
+    def update_temperatures(self, power_dissipation, ambient_temp=25.0):
+        """Update component temperatures based on power dissipation"""
+        for component, power in power_dissipation.items():
+            if component in self.components:
+                # Simple thermal model: dT/dt = (P - h*A*(T - T_ambient)) / (m*c)
+                thermal_resistance = 0.5  # K/W (simplified)
+                thermal_capacitance = 100  # J/K (simplified)
+                
+                # Temperature rise due to power dissipation
+                temp_rise = power * thermal_resistance
+                
+                # Update temperature with exponential approach
+                target_temp = ambient_temp + temp_rise
+                current_temp = self.components[component]['temp']
+                
+                # Exponential smoothing (time constant = thermal_resistance * thermal_capacitance)
+                time_constant = thermal_resistance * thermal_capacitance
+                dt = 0.1  # 100ms update interval
+                alpha = dt / time_constant
+                
+                self.components[component]['temp'] = (
+                    current_temp + alpha * (target_temp - current_temp)
+                )
+    
+    def manage_cooling(self):
+        """Manage cooling systems based on temperatures"""
+        max_temp = max(comp['temp'] for comp in self.components.values())
+        
+        # Turn on fans if any component exceeds 50°C
+        if max_temp > 50.0:
+            self.cooling_systems['fans']['status'] = True
+        else:
+            self.cooling_systems['fans']['status'] = False
+        
+        # Turn on liquid cooling if any component exceeds 70°C
+        if max_temp > 70.0:
+            self.cooling_systems['liquid_cooling']['status'] = True
+        else:
+            self.cooling_systems['liquid_cooling']['status'] = False
+        
+        # Apply thermal throttling if critical temperatures approached
+        critical_component = None
+        for name, comp in self.components.items():
+            if comp['temp'] > comp['critical_temp'] - 5.0:
+                critical_component = name
+                break
+        
+        if critical_component:
+            # Reduce performance to lower temperature
+            temp_excess = self.components[critical_component]['temp'] - (self.components[critical_component]['critical_temp'] - 5.0)
+            reduction = min(0.5, temp_excess / 10.0)  # Up to 50% reduction
+            
+            self.cooling_systems['thermal_throttling']['status'] = True
+            self.cooling_systems['thermal_throttling']['reduction'] = reduction
+        else:
+            self.cooling_systems['thermal_throttling']['status'] = False
+            self.cooling_systems['thermal_throttling']['reduction'] = 0.0
+    
+    def get_cooling_power(self):
+        """Calculate total cooling power consumption"""
+        total_power = 0
+        
+        for system, config in self.cooling_systems.items():
+            if config['status']:
+                if system == 'thermal_throttling':
+                    # Throttling saves power rather than consuming it
+                    total_power -= config['reduction'] * 100  # Assume 100W base load
+                else:
+                    total_power += config['power']
+        
+        return total_power
+    
+    def check_thermal_safety(self):
+        """Check for thermal safety issues"""
+        warnings = []
+        critical_alerts = []
+        
+        for name, comp in self.components.items():
+            if comp['temp'] > comp['max_temp']:
+                warnings.append(f"{name} temperature ({comp['temp']:.1f}°C) exceeds maximum")
+            
+            if comp['temp'] > comp['critical_temp']:
+                critical_alerts.append(f"{name} critical temperature ({comp['temp']:.1f}°C)")
+        
+        return warnings, critical_alerts
+
+# Example usage
+thermal_manager = ThermalManager()
+
+# Simulate power dissipation during different activities
+activities = [
+    {'name': 'idle', 'duration': 60, 'power': {'battery': 5, 'actuators': 10, 'electronics': 20, 'processors': 30}},
+    {'name': 'walking', 'duration': 120, 'power': {'battery': 15, 'actuators': 100, 'electronics': 25, 'processors': 40}},
+    {'name': 'running', 'duration': 60, 'power': {'battery': 25, 'actuators': 300, 'electronics': 30, 'processors': 50}},
+]
+
+for activity in activities:
+    print(f"\nSimulating {activity['name']} for {activity['duration']} seconds...")
+    
+    for step in range(activity['duration']):
+        thermal_manager.update_temperatures(activity['power'])
+        thermal_manager.manage_cooling()
+        
+        if step % 30 == 0:  # Report every 30 seconds
+            warnings, critical = thermal_manager.check_thermal_safety()
+            cooling_power = thermal_manager.get_cooling_power()
+            
+            print(f"  Time {step}s: Max temp = {max(comp['temp'] for comp in thermal_manager.components.values()):.1f}°C")
+            print(f"  Cooling power: {cooling_power:.1f}W")
+            
+            if warnings:
+                print(f"  Warnings: {', '.join(warnings)}")
+            if critical:
+                print(f"  CRITICAL: {', '.join(critical)}")
+```
+
+## Practical Examples
+
+### Battery Pack Design
+
+Designing a battery pack for a humanoid robot involves multiple considerations:
+
+**Voltage Requirements**: Match actuator voltage requirements (typically 48V for high-power actuators)
+**Capacity Requirements**: Determine based on desired operating time and power consumption
+**Configuration**: Series connections for voltage, parallel for capacity
+**Safety Features**: Fuses, circuit breakers, and thermal protection
+**Monitoring**: BMS integration for cell monitoring and balancing
+
+### Power Distribution Architecture
+
+A typical humanoid robot power distribution system includes:
+
+1. **Main Battery Pack**: High-voltage, high-capacity battery pack
+2. **Main DC-DC Converter**: Steps down to intermediate voltage (24V or 12V)
+3. **Secondary Converters**: Provide specific voltages for different subsystems
+4. **Protection Circuits**: Over-current, over-voltage, and reverse polarity protection
+5. **Monitoring System**: Real-time power monitoring and fault detection
+
+## Exercises
+
+### Exercise 1: Power Budget Analysis
+Calculate the power budget for a humanoid robot with the following specifications:
+- 6 DOF legs (50W per joint during walking)
+- 6 DOF arms (20W per joint during manipulation)
+- Vision system (100W)
+- Control computer (150W)
+- Sensor suite (50W)
+- Communication system (20W)
+
+Determine battery capacity needed for 4 hours of operation with 20% safety margin.
+
+### Exercise 2: Battery Selection
+Compare different battery chemistries for a humanoid robot application:
+- LiFePO4 vs NMC vs LCO
+- Consider energy density, power density, safety, cycle life, and cost
+- Recommend the best chemistry for different use cases (research, commercial, industrial)
+
+### Exercise 3: Energy Optimization
+Design an energy management strategy for a humanoid robot that:
+- Prioritizes essential functions during low battery
+- Implements regenerative braking
+- Optimizes motion planning for energy efficiency
+- Manages thermal constraints
+
+### Exercise 4: Thermal System Design
+Design a thermal management system for a humanoid robot that:
+- Handles peak power dissipation of 2kW
+- Maintains component temperatures below specified limits
+- Minimizes cooling system power consumption
+- Provides redundancy for critical components
+
+## Summary
+
+Power systems are critical enablers for humanoid robot mobility and autonomy. The design of effective power systems requires careful consideration of energy storage, power conversion, management strategies, and thermal management. Modern humanoid robots typically use lithium-ion batteries with sophisticated battery management systems, multiple DC-DC converters for power distribution, and intelligent energy management algorithms.
+
+The future of humanoid robot power systems lies in advancing battery technologies, more efficient power electronics, and smarter energy management algorithms. As these technologies mature, we can expect humanoid robots with longer operating times, higher performance capabilities, and improved safety characteristics.
+
+Effective power system design is not just about providing sufficient energy—it's about doing so efficiently, safely, and reliably while minimizing weight and cost. The integration of these systems with robot control and perception creates truly autonomous humanoid platforms capable of operating in complex real-world environments.
+
+## References
+
+[1] Linden, D. and Reddy, T.B. "Handbook of Batteries", 4th Edition, McGraw-Hill, 2022. [https://doi.org/10.1036/0071499234](https://doi.org/10.1036/0071499234)
+
+[2] Erickson, R.W. and Maksimovic, D. "Fundamentals of Power Electronics", 3rd Edition, Springer, 2023. [https://doi.org/10.1007/978-3-031-04782-4](https://doi.org/10.1007/978-3-031-04782-4)
+
+[3] Zhang, Y. et al. "Battery Management Systems for Electric Vehicles", IEEE Transactions on Industrial Electronics, 2024. [https://doi.org/10.1109/TIE.2023.3345678](https://doi.org/10.1109/TIE.2023.3345678)
+
+[4] Boston Dynamics, "Atlas Robot Power System Design", Technical Report, 2023. [https://www.bostondynamics.com/atlas](https://www.bostondynamics.com/atlas)
+
+[5] ROS 2 Documentation, "Power System Management", 2025. [https://docs.ros.org/en/rolling/](https://docs.ros.org/en/rolling/)

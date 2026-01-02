@@ -1,0 +1,360 @@
+---
+title: "Balance, Gait Generation, and Whole-Body Control"
+sidebar_label: "Balance & Gait Control"
+description: "Understanding balance mechanisms, gait generation algorithms, and whole-body control strategies for humanoid robots"
+---
+
+# Balance, Gait Generation, and Whole-Body Control
+
+## Learning Objectives
+
+- [ ] Understand fundamental principles of balance control for humanoid robots
+- [ ] Master Zero Moment Point (ZMP) theory and its applications
+- [ ] Analyze different gait generation strategies and algorithms
+- [ ] Implement whole-body control for coordinated movement
+- [ ] Design balance and gait systems for practical applications
+
+## Introduction
+
+Balance and gait generation represent two of the most challenging aspects of humanoid robotics. Unlike wheeled robots that maintain stability through a wide base of support, humanoid robots must constantly manage their center of mass to prevent falling while walking, standing, or performing complex movements. This module explores the fundamental principles of balance control, gait generation algorithms, and whole-body coordination strategies that enable humanoid robots to move with human-like stability and grace.
+
+## Balance Control Fundamentals
+
+### Center of Mass and Center of Pressure
+
+The **Center of Mass (CoM)** represents the average position of all mass in the robot's body, while the **Center of Pressure (CoP)** is the point where the total sum of a pressure field acts on a body. For stable standing, the CoP must remain within the support polygon formed by the robot's feet.
+
+**Key Principles:**
+- The CoM projection must stay within the base of support for static stability
+- During dynamic movement, the CoP can move outside the support polygon temporarily
+- The relationship between CoM and CoP determines the robot's stability state
+
+### Zero Moment Point (ZMP) Theory
+
+The **Zero Moment Point (ZMP)** is a fundamental concept in bipedal locomotion. The ZMP is the point on the ground where the total moment of all forces acting on the robot equals zero. For stable dynamic walking, the ZMP must remain within the support polygon.
+
+**ZMP Calculation:**
+```
+ZMP_x = (Σ(F_i * z_i) - m * g * x_com) / (Σ(F_i))
+ZMP_y = (Σ(F_i * z_i) - m * g * y_com) / (Σ(F_i))
+```
+
+Where:
+- `F_i` represents ground reaction forces
+- `z_i` is the height of force application
+- `m` is the robot's total mass
+- `g` is gravitational acceleration
+- `x_com`, `y_com` are center of mass coordinates
+
+## Gait Generation Strategies
+
+### Pattern-Based Gait Generation
+
+Pattern-based approaches use predefined motion patterns that are modified based on sensor feedback. These methods are computationally efficient and reliable for known terrains.
+
+**Common Gait Patterns:**
+1. **Static Walking**: The robot maintains static equilibrium throughout the gait cycle
+2. **Dynamic Walking**: The robot uses dynamic stability with controlled falling phases
+3. **Hybrid Walking**: Combines static and dynamic phases for optimal efficiency
+
+### Preview Control Methods
+
+Preview control uses future reference trajectories to optimize current control inputs. This approach is particularly effective for humanoid robots because it can anticipate upcoming balance challenges.
+
+**Linear Quadratic Regulator (LQR) with Preview:**
+```python
+import numpy as np
+from scipy import linalg
+
+class PreviewController:
+    def __init__(self, horizon=20):
+        self.horizon = horizon
+        self.A, self.B = self._build_model_matrices()
+        self.Q, self.R = self._build_cost_matrices()
+        self.K = self._compute_lqr_gain()
+        
+    def _build_model_matrices(self):
+        # Simplified inverted pendulum model
+        dt = 0.01  # 10ms control period
+        g = 9.81
+        z_c = 0.8  # COM height
+        
+        A = np.array([[1, dt, 0],
+                      [0, 1, dt],
+                      [0, 0, 1]])
+        B = np.array([[0], [dt**2/z_c], [dt]])
+        return A, B
+    
+    def compute_control(self, state, preview_trajectory):
+        control = -self.K @ state
+        for i in range(min(self.horizon, len(preview_trajectory))):
+            control += self._preview_gain(i) @ preview_trajectory[i]
+        return control
+```
+
+### Central Pattern Generators (CPGs)
+
+Central Pattern Generators are neural networks that produce rhythmic patterns without requiring sensory feedback. CPGs can generate adaptive gaits that respond to environmental changes.
+
+**CPG Implementation Example:**
+```python
+class CPGNetwork:
+    def __init__(self, num_oscillators=4):
+        self.num_oscillators = num_oscillators
+        self.frequencies = np.ones(num_oscillators) * 2.0  # 2 Hz base frequency
+        self.amplitudes = np.ones(num_oscillators) * 0.1
+        self.phase_offsets = np.array([0, np.pi, np.pi/2, 3*np.pi/2])
+        self.coupling_weights = self._initialize_coupling()
+        
+    def step(self, dt):
+        # Update oscillator phases
+        self.phases += 2 * np.pi * self.frequencies * dt
+        self.phases = self.phases % (2 * np.pi)
+        
+        # Apply coupling between oscillators
+        for i in range(self.num_oscillators):
+            for j in range(self.num_oscillators):
+                if i != j:
+                    phase_diff = self.phases[j] - self.phases[i]
+                    self.phases[i] += self.coupling_weights[i,j] * np.sin(phase_diff) * dt
+        
+        # Generate output signals
+        outputs = self.amplitudes * np.sin(self.phases + self.phase_offsets)
+        return outputs
+```
+
+## Whole-Body Control
+
+### Hierarchical Control Architecture
+
+Whole-body control for humanoid robots typically follows a hierarchical structure:
+
+1. **High-Level Planning**: Task planning and trajectory generation
+2. **Mid-Level Coordination**: Balance control and gait generation
+3. **Low-Level Control**: Joint torque/position control
+
+### Operational Space Control
+
+Operational Space Control (OSC) allows the robot to control specific tasks in Cartesian space while managing redundancy through null space projection.
+
+**OSC Implementation:**
+```python
+class OperationalSpaceController:
+    def __init__(self, robot_model):
+        self.robot = robot_model
+        self.lambda_reg = 0.01  # Regularization parameter
+        
+    def compute_command(self, task_space_accel, joint_positions, joint_velocities):
+        # Get current robot state
+        J = self.robot.jacobian(joint_positions)  # Task Jacobian
+        M = self.robot.mass_matrix(joint_positions)  # Joint space inertia
+        
+        # Compute operational space dynamics
+        Lambda = np.linalg.inv(J @ np.linalg.inv(M) @ J.T + self.lambda_reg * np.eye(J.shape[0]))
+        
+        # Compute task space control
+        task_force = Lambda @ task_space_accel
+        
+        # Project to joint space
+        joint_torques = J.T @ task_force
+        
+        # Add null space control for posture maintenance
+        J_pinv = np.linalg.pinv(J)
+        null_space = np.eye(J.shape[1]) - J_pinv @ J
+        posture_control = -null_space @ (10 * joint_positions + 5 * joint_velocities)
+        
+        return joint_torques + posture_control
+```
+
+### Momentum-Based Control
+
+Momentum-based control explicitly manages the robot's linear and angular momentum, which is crucial for dynamic balance during complex movements.
+
+**Momentum Control Equations:**
+```
+L_dot = F_ext + m * g
+H_dot = τ_ext + r × F_ext
+```
+
+Where:
+- `L` is linear momentum
+- `H` is angular momentum
+- `F_ext` represents external forces
+- `τ_ext` represents external torques
+- `r` is the position vector from CoM to force application point
+
+## Sensor Integration for Balance
+
+### Inertial Measurement Units (IMUs)
+
+IMUs provide critical information about the robot's orientation and acceleration. Proper sensor fusion is essential for accurate state estimation.
+
+**IMU Data Processing:**
+```python
+class IMUProcessor:
+    def __init__(self):
+        self.gyro_bias = np.zeros(3)
+        self.accel_bias = np.zeros(3)
+        self.orientation = np.array([0, 0, 0, 1])  # Quaternion [x, y, z, w]
+        
+    def update_orientation(self, gyro, accel, dt):
+        # Remove bias
+        gyro_corrected = gyro - self.gyro_bias
+        accel_corrected = accel - self.accel_bias
+        
+        # Complementary filter for orientation estimation
+        alpha = 0.98  # Gyro weight
+        orientation_gyro = self._integrate_gyro(gyro_corrected, dt)
+        orientation_accel = self._estimate_from_accel(accel_corrected)
+        
+        self.orientation = alpha * orientation_gyro + (1 - alpha) * orientation_accel
+        self.orientation = self._normalize_quaternion(self.orientation)
+        
+    def get_angular_velocity(self):
+        return self._quaternion_to_angular_velocity(self.orientation)
+```
+
+### Force/Torque Sensors
+
+Force/torque sensors in the robot's feet provide direct measurement of ground reaction forces, enabling precise ZMP calculation.
+
+**ZMP from Force Sensors:**
+```python
+def compute_zmp_from_sensors(force_torque_data):
+    """
+    Compute ZMP from foot force/torque sensor data
+    """
+    # Extract force and moment components
+    fx, fy, fz = force_torque_data['force']
+    mx, my, mz = force_torque_data['moment']
+    
+    # Compute ZMP coordinates (assuming foot frame)
+    if abs(fz) > 0.01:  # Avoid division by zero
+        zmp_x = -my / fz
+        zmp_y = mx / fz
+    else:
+        zmp_x, zmp_y = 0, 0
+    
+    return np.array([zmp_x, zmp_y])
+```
+
+## Practical Implementation Considerations
+
+### Real-Time Constraints
+
+Balance control must operate at high frequencies (typically 500-1000 Hz) to respond quickly to disturbances. This requires efficient algorithms and optimized code.
+
+**Optimization Strategies:**
+1. **Precomputed Matrices**: Cache frequently used matrix computations
+2. **Reduced-Order Models**: Use simplified models for control calculations
+3. **Parallel Processing**: Distribute computations across multiple CPU cores
+
+### Safety Considerations
+
+Humanoid robots pose significant safety risks during balance loss events. Robust safety systems are essential.
+
+**Safety Mechanisms:**
+1. **Emergency Stop**: Immediate joint locking when dangerous conditions detected
+2. **Safe Falling**: Controlled falling strategies to minimize damage
+3. **Collision Detection**: Real-time monitoring for unexpected contacts
+
+### Energy Efficiency
+
+Energy consumption is a critical constraint for mobile humanoid robots.
+
+**Energy Optimization Techniques:**
+1. **Passive Dynamics**: Utilize natural dynamics to reduce actuator requirements
+2. **Regenerative Braking**: Capture energy during deceleration phases
+3. **Optimal Gait Selection**: Choose gaits that minimize energy consumption for given tasks
+
+## Advanced Topics
+
+### Learning-Based Balance Control
+
+Machine learning approaches can adapt to changing conditions and improve performance over time.
+
+**Reinforcement Learning for Balance:**
+```python
+import gym
+import numpy as np
+from stable_baselines3 import PPO
+
+class HumanoidBalanceEnv(gym.Env):
+    def __init__(self):
+        super().__init__()
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(12,))  # 12 joint torques
+        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(24,))
+        
+    def step(self, action):
+        # Apply joint torques
+        self.robot.set_joint_torques(action)
+        
+        # Simulate physics
+        self.robot.simulate_step(self.dt)
+        
+        # Compute reward based on balance and task completion
+        reward = self._compute_balance_reward()
+        
+        # Check termination conditions
+        done = self._check_fall() or self._task_complete()
+        
+        return self._get_observation(), reward, done, {}
+    
+    def _compute_balance_reward(self):
+        # Reward for maintaining upright posture
+        orientation_error = np.linalg.norm(self.robot.get_orientation_error())
+        zmp_margin = self.robot.get_zmp_stability_margin()
+        
+        balance_reward = np.exp(-orientation_error) * zmp_margin
+        return balance_reward
+```
+
+### Multi-Contact Locomotion
+
+Advanced humanoid robots can use walls, handrails, or other environmental contacts for enhanced stability.
+
+**Contact Planning:**
+```python
+class ContactPlanner:
+    def __init__(self, robot_model):
+        self.robot = robot_model
+        self.contact_sequence = []
+        
+    def plan_contacts(self, goal_pose, environment):
+        # Generate potential contact locations
+        potential_contacts = self._find_contact_surfaces(environment)
+        
+        # Plan contact sequence using graph search
+        contact_graph = self._build_contact_graph(potential_contacts)
+        optimal_sequence = self._find_optimal_sequence(contact_graph, goal_pose)
+        
+        return optimal_sequence
+    
+    def _find_contact_surfaces(self, environment):
+        # Identify surfaces suitable for contact
+        contacts = []
+        for surface in environment.surfaces:
+            if self._is_valid_contact(surface):
+                contacts.append(surface)
+        return contacts
+```
+
+## Summary
+
+Balance, gait generation, and whole-body control are fundamental capabilities that enable humanoid robots to operate effectively in human environments. Key takeaways include:
+
+1. **ZMP Theory**: The Zero Moment Point provides a mathematical framework for understanding dynamic stability
+2. **Hierarchical Control**: Multi-layered control architectures enable complex behaviors while maintaining stability
+3. **Sensor Integration**: Accurate state estimation from multiple sensors is essential for robust balance
+4. **Adaptive Algorithms**: Modern approaches use learning and adaptation to handle uncertain environments
+5. **Safety and Efficiency**: Practical implementations must consider safety constraints and energy optimization
+
+The field continues to evolve with advances in machine learning, sensor technology, and computational power, bringing us closer to humanoid robots that can move with the grace and reliability of their human counterparts.
+
+## References
+
+1. Kajita, S., et al. "Introduction to Humanoid Robotics." Springer, 2014.
+2. Vukobratović, M., & Borovac, B. "Zero-moment point—Thirty five years of its life." International Journal of Humanoid Robotics, 2004.
+3. Englsberger, J., et al. "Overview of the torque-controlled humanoid robot TORO." IEEE-RAS International Conference on Humanoid Robots, 2014.
+4. Tedrake, R., et al. "LQR-Trees: Feedback motion planning via sums-of-squares verification." International Journal of Robotics Research, 2010.
+5. Kuindersma, S., et al. "Optimization-based locomotion planning, estimation, and control design for the Atlas humanoid robot." Autonomous Robots, 2016.

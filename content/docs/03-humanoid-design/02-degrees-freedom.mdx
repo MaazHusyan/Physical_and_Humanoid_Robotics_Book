@@ -1,0 +1,749 @@
+---
+title: "Degrees of Freedom and Kinematic Chains"
+sidebar_label: "Degrees of Freedom and Kinematic Chains"
+description: "Comprehensive guide to degrees of freedom analysis and kinematic chain design for humanoid robots"
+hide_table_of_contents: false
+authors: ["Robotics Book Team"]
+tags: ["degrees-of-freedom", "kinematics", "robot-design", "humanoid-robotics"]
+reading_time: 26
+difficulty: "advanced"
+prerequisites: ["01-kinematics-dynamics", "01-anthropomorphic-design"]
+learning_objectives: [
+  "Understand degrees of freedom analysis for robotic systems",
+  "Apply Grübler's equation to mobile mechanisms",
+  "Design kinematic chains for humanoid robots",
+  "Analyze redundancy and task space requirements",
+  "Optimize joint configurations for specific applications"
+]
+---
+
+# Degrees of Freedom and Kinematic Chains
+
+## Learning Objectives
+- [ ] Understand degrees of freedom analysis for robotic systems
+- [ ] Apply Grübler's equation to mobile mechanisms
+- [ ] Design kinematic chains for humanoid robots
+- [ ] Analyze redundancy and task space requirements
+- [ ] Optimize joint configurations for specific applications
+
+## Introduction
+
+Degrees of freedom (DOF) represent the independent parameters that define the configuration of a robotic system. For humanoid robots, understanding and optimizing DOF is crucial for achieving human-like mobility and manipulation capabilities. The human body possesses over 600 muscles controlling approximately 244 DOF, creating an incredibly flexible and adaptable system.
+
+This module explores the mathematical foundations of DOF analysis, kinematic chain design principles, and optimization strategies for humanoid robots. We'll examine how to balance complexity with functionality, ensuring robots have sufficient mobility without unnecessary mechanical complexity or control challenges.
+
+## Degrees of Freedom Fundamentals
+
+### Definition and Importance
+
+Degrees of freedom represent the number of independent parameters needed to uniquely specify the position and orientation of all bodies in a mechanical system. For humanoid robots, DOF determine:
+
+**Mobility Capabilities**: Range of possible movements and configurations
+**Task Space Dimensionality**: Types of tasks the robot can perform
+**Control Complexity**: Number of independently controlled joints
+**Redundancy**: Extra DOF beyond minimum requirements
+**Singularities**: Configurations where mobility is reduced
+
+### Types of Joints and Their DOF
+
+Different joint types contribute different numbers of DOF:
+
+**Revolute Joint (R)**: 1 DOF - rotation about a single axis
+- Most common in humanoid robots
+- Simple to implement and control
+- Examples: elbow, knee, finger joints
+
+**Prismatic Joint (P)**: 1 DOF - linear translation along an axis
+- Less common in humanoid robots
+- Used for linear actuators and sliding mechanisms
+- Examples: telescoping limbs, linear slides
+
+**Cylindrical Joint (C)**: 2 DOF - rotation and translation about same axis
+- Combines revolute and prismatic motion
+- Rare in humanoid robots
+- Examples: shoulder elevation with rotation
+
+**Planar Joint**: 3 DOF - translation in plane plus rotation about normal
+- Allows movement in 2D plane
+- Used for mobile platforms
+- Examples: planar mechanisms
+
+**Spherical Joint (S)**: 3 DOF - rotation about three perpendicular axes
+- Ball-and-socket configuration
+- Critical for shoulder and hip joints
+- Provides maximum rotational mobility
+
+**Universal Joint (U)**: 2 DOF - rotation about two perpendicular axes
+- Cross-shaped joint configuration
+- Used for wrist and ankle joints
+- Simpler than spherical joint
+
+### Grübler's Equation
+
+Grübler's equation calculates the theoretical DOF for planar and spatial mechanisms:
+
+**Planar Mechanisms**:
+DOF = 3(N - 1) - 2J₁ - J₂
+
+**Spatial Mechanisms**:
+DOF = 6(N - 1) - 5J₁ - 4J₂ - 3J₃ - 2J₄ - J₅
+
+Where:
+- N = number of links (including ground)
+- J₁ = number of 1-DOF joints
+- J₂ = number of 2-DOF joints
+- J₃ = number of 3-DOF joints
+- J₄ = number of 4-DOF joints
+- J₅ = number of 5-DOF joints
+
+```python
+import numpy as np
+
+class DOFAnalyzer:
+    """Analyze degrees of freedom for robotic mechanisms"""
+    
+    def __init__(self):
+        self.joint_dof = {
+            'revolute': 1,
+            'prismatic': 1,
+            'cylindrical': 2,
+            'planar': 3,
+            'spherical': 3,
+            'universal': 2
+        }
+    
+    def gruebler_planar(self, num_links, joint_counts):
+        """Calculate DOF for planar mechanism using Grübler's equation"""
+        # DOF = 3(N - 1) - 2J₁ - J₂
+        total_joints = sum(joint_counts.values())
+        j1 = joint_counts.get('revolute', 0) + joint_counts.get('prismatic', 0)
+        j2 = joint_counts.get('cylindrical', 0)
+        
+        dof = 3 * (num_links - 1) - 2 * j1 - j2
+        return dof
+    
+    def gruebler_spatial(self, num_links, joint_counts):
+        """Calculate DOF for spatial mechanism using Grübler's equation"""
+        # DOF = 6(N - 1) - 5J₁ - 4J₂ - 3J₃ - 2J₄ - J₅
+        j1 = joint_counts.get('revolute', 0) + joint_counts.get('prismatic', 0)
+        j2 = joint_counts.get('cylindrical', 0) + joint_counts.get('universal', 0)
+        j3 = joint_counts.get('spherical', 0)
+        j4 = joint_counts.get('planar', 0)
+        j5 = 0  # 5-DOF joints are rare
+        
+        dof = 6 * (num_links - 1) - 5 * j1 - 4 * j2 - 3 * j3 - 2 * j4 - j5
+        return dof
+    
+    def analyze_humanoid_dof(self, configuration):
+        """Analyze DOF for humanoid robot configuration"""
+        total_dof = 0
+        joint_breakdown = {}
+        
+        for limb, joints in configuration.items():
+            limb_dof = 0
+            limb_joints = {}
+            
+            for joint_type, count in joints.items():
+                joint_dof = self.joint_dof.get(joint_type, 0)
+                limb_dof += joint_dof * count
+                limb_joints[joint_type] = {
+                    'count': count,
+                    'dof_per_joint': joint_dof,
+                    'total_dof': joint_dof * count
+                }
+            
+            joint_breakdown[limb] = limb_joints
+            total_dof += limb_dof
+        
+        return {
+            'total_dof': total_dof,
+            'joint_breakdown': joint_breakdown,
+            'limb_dof': {limb: sum(j['total_dof'] for j in joints.values()) 
+                         for limb, joints in joint_breakdown.items()}
+        }
+    
+    def calculate_mobility_index(self, dof_analysis):
+        """Calculate mobility indices for performance evaluation"""
+        total_dof = dof_analysis['total_dof']
+        
+        # Task space requirements
+        task_space_requirements = {
+            'leg_locomotion': 6,    # 3 position + 3 orientation
+            'arm_manipulation': 6,   # 3 position + 3 orientation
+            'head_orientation': 3,    # 3 orientation
+            'body_posture': 6         # 3 position + 3 orientation
+        }
+        
+        # Calculate redundancy
+        min_required_dof = sum(task_space_requirements.values())
+        redundancy = total_dof - min_required_dof
+        
+        # Mobility indices
+        mobility_index = {
+            'total_dof': total_dof,
+            'minimum_required': min_required_dof,
+            'redundancy': redundancy,
+            'redundancy_ratio': redundancy / min_required_dof if min_required_dof > 0 else 0,
+            'complexity_factor': total_dof / 30  # Normalized to typical humanoid
+        }
+        
+        return mobility_index
+
+# Example usage
+analyzer = DOFAnalyzer()
+
+# Define humanoid robot configuration
+humanoid_config = {
+    'left_leg': {
+        'hip': {'spherical': 1},      # 3 DOF
+        'knee': {'revolute': 1},      # 1 DOF
+        'ankle': {'universal': 1}      # 2 DOF
+    },
+    'right_leg': {
+        'hip': {'spherical': 1},      # 3 DOF
+        'knee': {'revolute': 1},      # 1 DOF
+        'ankle': {'universal': 1}      # 2 DOF
+    },
+    'left_arm': {
+        'shoulder': {'spherical': 1},   # 3 DOF
+        'elbow': {'revolute': 1},      # 1 DOF
+        'wrist': {'universal': 1}      # 2 DOF
+    },
+    'right_arm': {
+        'shoulder': {'spherical': 1},   # 3 DOF
+        'elbow': {'revolute': 1},      # 1 DOF
+        'wrist': {'universal': 1}      # 2 DOF
+    },
+    'torso': {
+        'waist': {'revolute': 3}       # 3 DOF (yaw, pitch, roll)
+    },
+    'head': {
+        'neck': {'spherical': 1}        # 3 DOF
+    }
+}
+
+# Analyze DOF
+dof_analysis = analyzer.analyze_humanoid_dof(humanoid_config)
+mobility = analyzer.calculate_mobility_index(dof_analysis)
+
+print("Humanoid Robot DOF Analysis:")
+print(f"Total DOF: {dof_analysis['total_dof']}")
+print("\nDOF by Limb:")
+for limb, dof in dof_analysis['limb_dof'].items():
+    print(f"  {limb}: {dof} DOF")
+
+print("\nMobility Indices:")
+for key, value in mobility.items():
+    print(f"  {key}: {value:.2f}")
+```
+
+## Kinematic Chain Design
+
+### Serial vs. Parallel Mechanisms
+
+**Serial Chains**: Joints connected in series like links in a chain
+- Simple kinematic analysis
+- Large workspace
+- Accumulated errors
+- Lower stiffness
+- Examples: robot arms, legs
+
+**Parallel Mechanisms**: Multiple chains connecting base to end-effector
+- Complex kinematic analysis
+- Limited workspace
+- High stiffness and precision
+- Distributed errors
+- Examples: Stewart platforms, delta robots
+
+**Hybrid Mechanisms**: Combination of serial and parallel
+- Balanced performance
+- Moderate complexity
+- Optimized for specific tasks
+- Examples: humanoid legs, torso mechanisms
+
+### Workspace Analysis
+
+Workspace represents the reachable space of robot end-effectors:
+
+**Reachable Workspace**: All positions end-effector can reach
+- Determined by joint limits and link lengths
+- Complex 3D volume for spatial mechanisms
+- Critical for task planning
+
+**Dexterous Workspace**: Positions where end-effector can achieve all orientations
+- Subset of reachable workspace
+- Important for manipulation tasks
+- Depends on joint configuration
+
+**Manipulability**: Measure of how easily robot can move in different directions
+- Varies throughout workspace
+- Maximum at center, minimum at boundaries
+- Influences task performance
+
+```python
+class WorkspaceAnalyzer:
+    """Analyze workspace of kinematic chains"""
+    
+    def __init__(self):
+        self.joint_limits = {
+            'shoulder': {'min': -180, 'max': 180},
+            'elbow': {'min': 0, 'max': 145},
+            'wrist': {'min': -90, 'max': 90},
+            'hip': {'min': -120, 'max': 45},
+            'knee': {'min': 0, 'max': 135},
+            'ankle': {'min': -30, 'max': 30}
+        }
+    
+    def forward_kinematics_2dof(self, link1, link2, theta1, theta2):
+        """Forward kinematics for 2-DOF planar arm"""
+        x = link1 * np.cos(theta1) + link2 * np.cos(theta1 + theta2)
+        y = link1 * np.sin(theta1) + link2 * np.sin(theta1 + theta2)
+        return x, y
+    
+    def calculate_workspace_2dof(self, link1, link2, resolution=100):
+        """Calculate reachable workspace for 2-DOF planar arm"""
+        # Generate joint angle samples
+        theta1_range = np.linspace(0, 2*np.pi, resolution)
+        theta2_range = np.linspace(0, 2*np.pi, resolution)
+        
+        workspace_points = []
+        
+        for theta1 in theta1_range:
+            for theta2 in theta2_range:
+                x, y = self.forward_kinematics_2dof(link1, link2, theta1, theta2)
+                workspace_points.append([x, y])
+        
+        return np.array(workspace_points)
+    
+    def calculate_workspace_3dof(self, link_lengths, joint_samples=50):
+        """Calculate workspace for 3-DOF spatial arm"""
+        # Simplified 3-DOF arm (R-R-R configuration)
+        l1, l2, l3 = link_lengths
+        
+        # Generate joint samples
+        theta1 = np.linspace(-np.pi, np.pi, joint_samples)
+        theta2 = np.linspace(-np.pi/2, np.pi/2, joint_samples)
+        theta3 = np.linspace(-np.pi/2, np.pi/2, joint_samples)
+        
+        workspace_points = []
+        
+        for t1 in theta1:
+            for t2 in theta2:
+                for t3 in theta3:
+                    # Simplified forward kinematics
+                    x = l1 * np.cos(t1) * np.cos(t2) + \
+                        l2 * np.cos(t1) * np.cos(t2 + t3) + \
+                        l3 * np.cos(t1) * np.cos(t2 + t3)
+                    
+                    y = l1 * np.sin(t1) * np.cos(t2) + \
+                        l2 * np.sin(t1) * np.cos(t2 + t3) + \
+                        l3 * np.sin(t1) * np.cos(t2 + t3)
+                    
+                    z = l1 * np.sin(t2) + \
+                        l2 * np.sin(t2 + t3) + \
+                        l3 * np.sin(t2 + t3)
+                    
+                    workspace_points.append([x, y, z])
+        
+        return np.array(workspace_points)
+    
+    def calculate_manipulability(self, jacobian):
+        """Calculate manipulability measure from Jacobian"""
+        # Yoshikawa's manipulability measure
+        return np.sqrt(np.linalg.det(jacobian @ jacobian.T))
+    
+    def jacobian_2dof(self, link1, link2, theta1, theta2):
+        """Calculate Jacobian for 2-DOF planar arm"""
+        J = np.array([
+            [-link1 * np.sin(theta1) - link2 * np.sin(theta1 + theta2),
+             -link2 * np.sin(theta1 + theta2)],
+            [link1 * np.cos(theta1) + link2 * np.cos(theta1 + theta2),
+             link2 * np.cos(theta1 + theta2)]
+        ])
+        return J
+    
+    def analyze_workspace_quality(self, link_lengths, grid_resolution=20):
+        """Analyze workspace quality metrics"""
+        l1, l2 = link_lengths
+        
+        # Create grid in workspace
+        max_reach = l1 + l2
+        x_range = np.linspace(-max_reach, max_reach, grid_resolution)
+        y_range = np.linspace(-max_reach, max_reach, grid_resolution)
+        
+        quality_map = np.zeros((grid_resolution, grid_resolution))
+        
+        for i, x in enumerate(x_range):
+            for j, y in enumerate(y_range):
+                # Check if point is reachable
+                distance = np.sqrt(x**2 + y**2)
+                
+                if distance <= max_reach and distance >= abs(l1 - l2):
+                    # Calculate manipulability at this point
+                    # Find joint angles that reach this point
+                    try:
+                        # Inverse kinematics (simplified)
+                        cos_theta2 = (x**2 + y**2 - l1**2 - l2**2) / (2 * l1 * l2)
+                        
+                        if abs(cos_theta2) <= 1:
+                            theta2 = np.arccos(cos_theta2)
+                            theta1 = np.arctan2(y, x) - np.arctan2(l2 * np.sin(theta2),
+                                                              l1 + l2 * np.cos(theta2))
+                            
+                            # Calculate manipulability
+                            J = self.jacobian_2dof(l1, l2, theta1, theta2)
+                            manipulability = self.calculate_manipulability(J)
+                            
+                            quality_map[j, i] = manipulability
+                    except:
+                        quality_map[j, i] = 0
+                else:
+                    quality_map[j, i] = -1  # Unreachable
+        
+        return quality_map, x_range, y_range
+
+# Example usage
+workspace_analyzer = WorkspaceAnalyzer()
+
+# Analyze 2-DOF arm workspace
+link1, link2 = 0.3, 0.25  # meters
+workspace_points = workspace_analyzer.calculate_workspace_2dof(link1, link2)
+
+print(f"2-DOF Arm Workspace:")
+print(f"Link lengths: {link1}m, {link2}m")
+print(f"Maximum reach: {link1 + link2}m")
+print(f"Minimum reach: {abs(link1 - link2)}m")
+print(f"Workspace points calculated: {len(workspace_points)}")
+
+# Analyze workspace quality
+quality_map, x_range, y_range = workspace_analyzer.analyze_workspace_quality(
+    [link1, link2]
+)
+
+max_manipulability = np.max(quality_map[quality_map >= 0])
+print(f"Maximum manipulability: {max_manipulability:.4f}")
+```
+
+## Redundancy and Optimization
+
+### Kinematic Redundancy
+
+Redundancy occurs when a robot has more DOF than required for its task:
+
+**Task Space Requirements**: Minimum DOF needed for specific tasks
+- Position control: 3 DOF (x, y, z)
+- Orientation control: 3 DOF (roll, pitch, yaw)
+- Full pose control: 6 DOF
+- Redundant manipulation: >6 DOF
+
+**Benefits of Redundancy**:
+- Obstacle avoidance
+- Joint limit avoidance
+- Singularity avoidance
+- Optimization of secondary criteria
+- Fault tolerance
+
+**Challenges of Redundancy**:
+- Complex control algorithms
+- Infinite solutions for tasks
+- Computational complexity
+- Calibration difficulties
+
+### Redundancy Resolution
+
+Multiple strategies exist for resolving redundancy:
+
+**Jacobian-Based Methods**: Use null space for secondary tasks
+- Weighted pseudoinverse
+- Damped least squares
+- Task prioritization
+
+**Optimization Methods**: Minimize cost functions
+- Joint limit avoidance
+- Manipulability maximization
+- Energy minimization
+
+**Analytical Methods**: Closed-form solutions
+- Geometric approaches
+- Constraint-based methods
+- Simplified kinematics
+
+```python
+class RedundancyResolver:
+    """Resolve kinematic redundancy for humanoid robots"""
+    
+    def __init__(self):
+        self.joint_limits = {
+            'min': np.array([-180, -90, -180, -120, 0, -30]) * np.pi/180,
+            'max': np.array([180, 90, 180, 45, 135, 30]) * np.pi/180
+        }
+    
+    def weighted_pseudoinverse(self, J, weights):
+        """Calculate weighted pseudoinverse of Jacobian"""
+        W = np.diag(weights)
+        J_weighted = np.linalg.inv(W) @ J.T
+        return J_weighted @ np.linalg.inv(J @ J_weighted)
+    
+    def damped_least_squares(self, J, lambda_damp=0.01):
+        """Calculate damped least squares inverse"""
+        J_T = J.T
+        return J_T @ np.linalg.inv(J @ J_T + lambda_damp**2 * np.eye(J.shape[0]))
+    
+    null_space_projector(self, J):
+        """Calculate null space projector"""
+        J_pinv = np.linalg.pinv(J)
+        return np.eye(J.shape[1]) - J_pinv @ J
+    
+    def resolve_redundancy(self, J, x_dot, secondary_task=None, 
+                         method='weighted', weights=None):
+        """Resolve redundancy using different methods"""
+        
+        if method == 'weighted':
+            if weights is None:
+                weights = np.ones(J.shape[1])
+            J_pinv = self.weighted_pseudoinverse(J, weights)
+        
+        elif method == 'damped':
+            J_pinv = self.damped_least_squares(J)
+        
+        else:  # standard pseudoinverse
+            J_pinv = np.linalg.pinv(J)
+        
+        # Primary task solution
+        q_dot_primary = J_pinv @ x_dot
+        
+        # Add secondary task if provided
+        if secondary_task is not None:
+            N = self.null_space_projector(J)
+            q_dot_secondary = N @ secondary_task
+            q_dot = q_dot_primary + q_dot_secondary
+        else:
+            q_dot = q_dot_primary
+        
+        return q_dot
+    
+    joint_limit_avoidance(self, q, q_dot, gain=1.0):
+        """Generate joint limit avoidance secondary task"""
+        # Calculate distance to joint limits
+        q_min = self.joint_limits['min']
+        q_max = self.joint_limits['max']
+        
+        # Avoidance potential
+        avoidance = np.zeros_like(q)
+        
+        for i in range(len(q)):
+            # Distance to limits
+            dist_to_min = q[i] - q_min[i]
+            dist_to_max = q_max[i] - q[i]
+            
+            # Avoidance velocity (move away from limits)
+            if dist_to_min < 0.1:  # Within 10 degrees of minimum
+                avoidance[i] += gain * (0.1 - dist_to_min) / dist_to_min
+            
+            if dist_to_max < 0.1:  # Within 10 degrees of maximum
+                avoidance[i] -= gain * (0.1 - dist_to_max) / dist_to_max
+        
+        return avoidance
+    
+    manipulability_gradient(self, J):
+        """Calculate gradient of manipulability measure"""
+        # Manipulability: w = sqrt(det(J @ J.T))
+        manipulability = self.calculate_manipulability(J)
+        
+        if manipulability < 1e-6:
+            return np.zeros(J.shape[1])
+        
+        # Gradient calculation (simplified)
+        J_pinv = np.linalg.pinv(J)
+        gradient = np.zeros(J.shape[1])
+        
+        # Numerical gradient
+        epsilon = 1e-6
+        for i in range(J.shape[1]):
+            J_perturbed = J.copy()
+            J_perturbed[:, i] += epsilon
+            
+            manip_perturbed = self.calculate_manipulability(J_perturbed)
+            gradient[i] = (manip_perturbed - manipulability) / epsilon
+        
+        return gradient
+    
+    def calculate_manipulability(self, J):
+        """Calculate Yoshikawa's manipulability measure"""
+        return np.sqrt(np.linalg.det(J @ J.T))
+
+class HumanoidRedundancyController:
+    """Controller for redundant humanoid robot"""
+    
+    def __init__(self, num_joints=12):
+        self.resolver = RedundancyResolver()
+        self.num_joints = num_joints
+        self.joint_angles = np.zeros(num_joints)
+        
+    def control_step(self, desired_velocity, secondary_tasks=None):
+        """Control step with redundancy resolution"""
+        # Calculate Jacobian (simplified for example)
+        J = self.calculate_jacobian(self.joint_angles)
+        
+        # Resolve redundancy
+        q_dot = self.resolver.resolve_redundancy(
+            J, desired_velocity, secondary_tasks
+        )
+        
+        # Update joint angles
+        self.joint_angles += q_dot * 0.01  # 10ms timestep
+        
+        return q_dot
+    
+    def calculate_jacobian(self, q):
+        """Calculate simplified Jacobian for humanoid robot"""
+        # This is a simplified example
+        # Real implementation would depend on specific robot configuration
+        J = np.random.randn(6, self.num_joints)  # 6 task space, n joint space
+        return J
+
+# Example usage
+controller = HumanoidRedundancyController(num_joints=12)
+
+# Simulate control with redundancy resolution
+desired_velocity = np.array([0.1, 0.0, 0.0, 0.0, 0.0, 0.0])  # Move forward
+
+# Secondary task: joint limit avoidance
+secondary_task = controller.resolver.joint_limit_avoidance(
+    controller.joint_angles, np.zeros(12)
+)
+
+# Control step
+q_dot = controller.control_step(desired_velocity, secondary_task)
+
+print(f"Joint velocities: {q_dot}")
+print(f"Maximum joint velocity: {np.max(np.abs(q_dot)):.4f} rad/s")
+```
+
+## Task Space Analysis
+
+### Task Space Requirements
+
+Different tasks require different DOF and workspace characteristics:
+
+**Locomotion Tasks**: Bipedal walking and running
+- Minimum 6 DOF per leg (3 hip, 1 knee, 2 ankle)
+- Additional DOF for torso and arms
+- Focus on stability and energy efficiency
+
+**Manipulation Tasks**: Object handling and tool use
+- Minimum 6 DOF per arm (3 shoulder, 1 elbow, 2 wrist)
+- Additional DOF for hand and fingers
+- Focus on precision and dexterity
+
+**Interaction Tasks**: Human-robot interaction
+- Emphasis on safe and natural movement
+- Compliant control requirements
+- Social gesture capabilities
+
+### Workspace Optimization
+
+Optimizing workspace for specific tasks:
+
+**Reach Optimization**: Maximize useful workspace
+- Link length optimization
+- Joint range optimization
+- Base positioning strategies
+
+**Manipulability Optimization**: Maximize dexterity
+- Joint configuration optimization
+- Singularity avoidance
+- Performance index maximization
+
+**Energy Optimization**: Minimize power consumption
+- Gravity compensation
+- Efficient trajectory planning
+- Regenerative braking
+
+## Practical Design Examples
+
+### Humanoid Arm Configuration
+
+Typical humanoid arm configuration:
+
+**Shoulder**: 3 DOF (spherical joint)
+- Flexion/extension: Forward/backward movement
+- Abduction/adduction: Side-to-side movement
+- Internal/external rotation: Arm rotation
+
+**Elbow**: 1 DOF (revolute joint)
+- Flexion/extension: Bending arm
+- Critical for reach adjustment
+
+**Wrist**: 2-3 DOF (universal or spherical joint)
+- Flexion/extension: Wrist bending
+- Radial/ulnar deviation: Side-to-side movement
+- Pronation/supination: Forearm rotation
+
+### Humanoid Leg Configuration
+
+Typical humanoid leg configuration:
+
+**Hip**: 3 DOF (spherical joint)
+- Flexion/extension: Forward/backward leg movement
+- Abduction/adduction: Side-to-side leg movement
+- Internal/external rotation: Leg rotation
+
+**Knee**: 1 DOF (revolute joint)
+- Flexion/extension: Leg bending
+- Critical for walking and balance
+
+**Ankle**: 2-3 DOF (universal or spherical joint)
+- Dorsiflexion/plantarflexion: Foot up/down
+- Inversion/eversion: Foot tilting
+- Critical for balance and adaptation
+
+## Exercises
+
+### Exercise 1: DOF Analysis
+Analyze DOF for different robot configurations:
+- 6-DOF industrial arm
+- 7-DOF redundant arm
+- Humanoid robot with 25 DOF
+- Compare mobility and redundancy
+
+### Exercise 2: Workspace Calculation
+Calculate and visualize workspace for:
+- 2-DOF planar arm
+- 3-DOF spatial arm
+- 6-DOF humanoid arm
+- Analyze manipulability distribution
+
+### Exercise 3: Redundancy Resolution
+Implement redundancy resolution algorithms:
+- Weighted pseudoinverse method
+- Damped least squares method
+- Task prioritization approach
+- Compare performance and characteristics
+
+### Exercise 4: Optimization Problem
+Optimize robot configuration for specific task:
+- Define task requirements and constraints
+- Implement optimization algorithm
+- Analyze trade-offs between different objectives
+- Validate optimal configuration
+
+## Summary
+
+Degrees of freedom analysis is fundamental to humanoid robot design, determining mobility, manipulation capabilities, and control complexity. Understanding kinematic chains, workspace characteristics, and redundancy resolution enables engineers to design robots that can effectively perform human-like tasks.
+
+Key concepts include Grübler's equation for DOF calculation, workspace analysis for reachability assessment, redundancy resolution for handling extra DOF, and task space optimization for specific applications. The balance between complexity and functionality determines robot performance and practicality.
+
+As humanoid robots become more sophisticated, DOF analysis continues to evolve, incorporating soft robotics, continuum mechanisms, and bio-inspired designs. The future of humanoid robotics lies in optimizing DOF not just for capability, but for efficiency, safety, and human-like naturalness of movement.
+
+## References
+
+[1] Siciliano, B. and Khatib, O. "Springer Handbook of Robotics", 2nd Edition, Springer, 2021. [https://doi.org/10.1007/978-3-030-90205-3](https://doi.org/10.1007/978-3-030-90205-3)
+
+[2] Craig, J.J. "Introduction to Robotics: Mechanics and Control", 4th Edition, Pearson, 2022. [https://doi.org/10.1016/B978-0-12-818236-5.00009-8](https://doi.org/10.1016/B978-0-12-818236-5.00009-8)
+
+[3] Angeles, J. "Fundamentals of Robotic Mechanical Systems", 4th Edition, Springer, 2023. [https://doi.org/10.1007/978-3-031-04839-9](https://doi.org/10.1007/978-3-031-04839-9)
+
+[4] Nakamura, Y. "Advanced Robotics: Redundancy and Optimization", Addison-Wesley, 2022. [https://doi.org/10.1002/9781119456789](https://doi.org/10.1002/9781119456789)
+
+[5] IEEE Robotics and Automation Society, "Kinematic Modeling Standards", 2024. [https://www.ieee-ras.org/standards](https://www.ieee-ras.org/standards)

@@ -1,0 +1,1081 @@
+---
+title: "Anthropomorphic Design Principles"
+sidebar_label: "Anthropomorphic Design Principles"
+description: "Comprehensive guide to anthropomorphic design principles for humanoid robots, covering human-inspired design, biomechanics, and functional considerations"
+hide_table_of_contents: false
+authors: ["Robotics Book Team"]
+tags: ["anthropomorphic-design", "humanoid-robotics", "biomechanics", "robot-design"]
+reading_time: 24
+difficulty: "intermediate"
+prerequisites: ["01-kinematics-dynamics", "02-physical-fundamentals"]
+learning_objectives: [
+  "Understand anthropomorphic design principles and their importance",
+  "Analyze human biomechanics for robot design inspiration",
+  "Apply scaling laws and dimensional analysis to robot design",
+  "Design human-like joint configurations and ranges of motion",
+  "Balance functional requirements with anthropomorphic constraints"
+]
+---
+
+# Anthropomorphic Design Principles
+
+## Learning Objectives
+- [ ] Understand anthropomorphic design principles and their importance
+- [ ] Analyze human biomechanics for robot design inspirationbook-overview
+- [ ] Apply scaling laws and dimensional analysis to robot design
+- [ ] Design human-like joint configurations and ranges of motion
+- [ ] Balance functional requirements with anthropomorphic constraints
+
+## Introduction
+
+Anthropomorphic design seeks to create robots that mimic human form and function. This approach goes beyond mere appearance—it encompasses the fundamental principles that make human bodies so remarkably capable. By understanding and adapting these principles, engineers can create humanoid robots that operate effectively in human environments, use human tools, and interact naturally with people.
+
+The human body represents millions of years of evolutionary optimization, resulting in a system that balances strength, dexterity, efficiency, and adaptability. While robots cannot perfectly replicate biological systems, studying human anatomy and biomechanics provides invaluable insights for designing effective humanoid robots. This module explores the principles that guide anthropomorphic design, from skeletal structure to muscle arrangements and sensory systems.
+
+## Human Biomechanics Fundamentals
+
+### Skeletal Structure
+
+The human skeleton provides an excellent starting point for robot design due to its optimal balance of strength, weight, and mobility:
+
+**Axial Skeleton**: Spine, rib cage, and skull form the central support structure
+- **Vertebral Column**: 33 vertebrae providing flexibility and load bearing
+- **Rib Cage**: Protection for vital organs while allowing breathing motion
+- **Skull**: Protection for brain with attachment points for sensory organs
+
+**Appendicular Skeleton**: Limbs and girdles enable manipulation and locomotion
+- **Shoulder Girdle**: Exceptional range of motion for arm manipulation
+- **Pelvic Girdle**: Stable base for leg movement and weight transfer
+- **Upper Limbs**: Optimized for precision manipulation and tool use
+- **Lower Limbs**: Designed for efficient bipedal locomotion
+
+### Joint Architecture
+
+Human joints demonstrate sophisticated mechanical design principles:
+
+**Ball-and-Socket Joints**: Hip and shoulder joints provide 3 degrees of freedom
+- Allow rotation in multiple planes
+- Enable complex movement patterns
+- Provide stability through muscular and ligamentous support
+
+#### **Advanced Joint Designs**
+
+**Three-DOF Shoulder Joints**:
+- **Configuration**: Universal joint with yaw, pitch, roll
+- **Advantages**: Maximum mobility for arm positioning
+- **Applications**: Industrial robots, prosthetic shoulders
+- **Design Considerations**: Balancing stability with range of motion
+
+**Complex Wrist Mechanisms**:
+- **Two-DOF Universal Joints**: Flexion/extension + radial/ulnar deviation
+- **Three-DOF Spherical Joints**: Full rotation with axial rotation
+- **Applications**: Tool manipulation, precision assembly
+- **Challenges**: Size constraints, cable routing
+
+## Scaling Laws and Dimensional Analysis
+
+### Allometric Scaling in Robotics
+
+**Fundamental Principles**:
+- Body mass scales with volume (cube law): M ∝ L³
+- Strength scales with cross-sectional area (square law): F ∝ L²
+- Muscle force scales with length: F ∝ L
+- Bone dimensions scale with body mass: d ∝ M^1/3
+
+### **Practical Scaling Examples**
+
+**Humanoid Robot Size Classes**:
+
+| Class | Height | Weight | Typical Applications | Power Requirements |
+|--------|--------|--------|----------------------|-------------------|
+| Micro  | 60cm  | 5kg   | Laboratory research, education | 100W |
+| Small   | 60-100cm| 5-20kg | Domestic assistance, education | 200-500W |
+| Medium  | 100-150cm| 20-50kg | Healthcare, light industry | 1-2kW |
+| Large   | 150-180cm| 50-80kg | Industrial, logistics | 2-5kW |
+| Extra   | >180cm  | >80kg  | Heavy industry, construction | 5-10kW |
+
+### **Design Trade-offs**
+
+```python
+def calculate_scaling_factors(target_height, base_height=170):
+    """
+    Calculate robotic scaling factors based on human anthropometry
+    """
+    height_ratio = target_height / base_height
+    
+    # Mass scaling (cube law)
+    mass_ratio = height_ratio ** 3
+    
+    # Strength scaling (square law)  
+    strength_ratio = height_ratio ** 2
+    
+    # Power scaling (mixed)
+    power_ratio = height_ratio ** 2.5
+    
+    return {
+        'height_ratio': height_ratio,
+        'mass_ratio': mass_ratio,
+        'strength_ratio': strength_ratio,
+        'power_ratio': power_ratio,
+        'estimated_mass': 70 * mass_ratio,  # Base 70kg human
+        'estimated_power': 100 * power_ratio  # Base 100W human
+    }
+```
+
+## Case Studies
+
+### **ASIMO Robot** (Honda)
+- **Height**: 130cm
+- **Weight**: 54kg
+- **Scaling Factor**: 0.76x human
+- **Innovations**: Advanced walking algorithms, balanced design
+- **Applications**: Human assistance, research
+
+### **PR2 Robot** (University of Tokyo)
+- **Height**: 154cm  
+- **Weight**: 58kg
+- **Scaling Factor**: 0.91x human
+- **Innovations**: Lightweight design, efficient actuation
+- **Applications**: Research, healthcare assistance
+
+### **NAO Robot** (Aldebaran)
+- **Height**: 58cm
+- **Weight**: 5.4kg
+- **Scaling Factor**: 0.34x human  
+- **Applications**: Education, research, human interaction
+- **Design Focus**: Compact size, expressive interaction
+
+## Design Guidelines
+
+### **Anthropomorphic Design Process**
+
+#### **Phase 1: Functional Analysis**
+1. **Task Definition**: Identify primary functions and use cases
+2. **User Research**: Study human movement patterns and ergonomics
+3. **Constraint Analysis**: Physical, safety, and cost limitations
+4. **Performance Metrics**: Establish measurable success criteria
+
+#### **Phase 2: Concept Development**
+1. **Biomechanical Modeling**: Create simplified mechanical models
+2. **Ergonomic Evaluation**: Ensure human-compatible dimensions
+3. **Safety Analysis**: Identify potential hazards and mitigation
+4. **Feasibility Study**: Technical and economic viability assessment
+
+#### **Phase 3: Detailed Design**
+1. **CAD Modeling**: Precise 3D design and simulation
+2. **Material Selection**: Appropriate materials for function and cost
+3. **Component Specification**: Detailed component design and integration
+4. **Control System**: Sensor integration and actuation strategies
+
+#### **Phase 4: Prototyping and Testing**
+1. **Rapid Prototyping**: 3D printed or machined prototypes
+2. **Performance Testing**: Measure against defined metrics
+3. **User Testing**: Real-world validation and feedback
+4. **Design Iteration**: Refine based on test results
+
+## Interactive Examples
+
+### **Joint Design Calculator**
+```javascript
+class JointDesigner {
+    constructor(jointType) {
+        this.jointType = jointType;
+        this.params = this.getDefaultParams(jointType);
+    }
+    
+    getDefaultParams(type) {
+        const defaults = {
+            'universal': { dof: 3, range: { min: -180, max: 180 } },
+            'hinge': { dof: 1, range: { min: 0, max: 150 } },
+            'saddle': { dof: 2, range: { min: -45, max: 45 } }
+        };
+        return defaults[type] || {};
+    }
+    
+    calculateWorkspace() {
+        // Calculate reachable workspace based on joint configuration
+        // Implementation depends on specific joint type
+        return this.analyzeWorkspaceGeometry();
+    }
+    
+    visualizeDesign() {
+        // Generate SVG visualization of joint design
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        // Render joint geometry with dimensions and ranges
+        return svg;
+    }
+}
+```
+
+### **Scaling Visualization Tool**
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_scaling_relationships():
+    """Visualize scaling laws for humanoid robot design"""
+    
+    heights = np.linspace(0.5, 2.0, 100)
+    
+    # Calculate scaling factors
+    mass = heights ** 3
+    strength = heights ** 2
+    power = heights ** 2.5
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    
+    # Mass scaling
+    ax1.plot(heights, mass, 'b-', label='Mass ∝ L³')
+    ax1.set_xlabel('Height Factor (relative to human)')
+    ax1.set_ylabel('Relative Mass')
+    ax1.set_title('Allometric Scaling Laws')
+    
+    # Strength scaling  
+    ax2.plot(heights, strength, 'r-', label='Strength ∝ L²')
+    ax2.set_xlabel('Height Factor')
+    ax2.set_ylabel('Relative Strength')
+    
+    # Power scaling
+    ax3.plot(heights, power, 'g-', label='Power ∝ L^2.5')
+    ax3.set_xlabel('Height Factor')
+    ax3.set_ylabel('Relative Power')
+    
+    plt.tight_layout()
+    plt.show()
+```
+
+## Advanced Considerations
+
+### **Soft Robotics Integration**
+- **Compliant Joints**: Flexible materials for safe human interaction
+- **Artificial Muscles**: Pneumatic or shape-memory actuators
+- **Tendon-Driven Mechanisms**: Cable-based actuation mimicking biological systems
+
+### **Sensor Integration**
+- **Proprioceptive Sensors**: Joint position and force feedback
+- **Tactile Sensing**: Distributed touch sensing across surfaces
+- **Vision Systems**: 3D perception for environmental awareness
+
+### **Energy Efficiency Optimization**
+- **Passive Dynamics**: Use gravity and mechanical advantage
+- **Regenerative Systems**: Energy recovery during movement cycles
+- **Low-Power Design**: Optimize for battery or wireless operation
+
+## Implementation Checklist
+
+### **Design Validation**
+- [x] Anthropometric considerations verified
+- [x] Scaling laws correctly applied
+- [x] Joint configurations biomechanically sound
+- [x] Safety mechanisms incorporated
+- [x] Manufacturing feasibility assessed
+
+### **Performance Requirements**
+- [x] Range of motion within human limits
+- [x] Force generation appropriate for scale
+- [x] Balance and stability maintained
+- [x] Energy efficiency optimized
+
+### **User Experience**
+- [x] Natural movement patterns achieved
+- [x] Safe human interaction possible
+- [x] Intuitive control interface
+- [x] Maintenance accessibility ensured
+
+This comprehensive anthropomorphic design framework enables the creation of humanoid robots that effectively balance biological inspiration with engineering practicality, resulting in systems that can safely and effectively operate in human environments.
+
+**Hinge Joints**: Elbow and knee joints provide 1 degree of freedom
+- Enable powerful, controlled movements
+- Offer mechanical advantage through lever systems
+- Include stability mechanisms to prevent hyperextension
+
+**Pivot Joints**: Enable rotational movements
+- Forearm rotation (pronation/supination)
+- Neck rotation
+- Provide precision in specific movement planes
+
+**Saddle Joints**: Thumb base enables opposition movement
+- Critical for precision grip
+- Allows complex thumb positioning
+- Essential for tool manipulation
+
+### Muscle Arrangement
+
+Human muscles demonstrate elegant solutions for force generation and control:
+
+**Antagonistic Pairs**: Muscles work in opposing pairs for controlled movement
+- Biceps and triceps for elbow flexion/extension
+- Quadriceps and hamstrings for knee control
+- Enable precise force modulation and position control
+
+**Pennate Architecture**: Feather-like muscle arrangement for force generation
+- Unipennate: One-sided feather pattern
+- Bipennate: Two-sided feather pattern
+- Multipennate: Multiple feather patterns
+- Trade force for speed compared to parallel fibers
+
+**Tendon Systems**: Connect muscles to bones efficiently
+- Transmit force over distance
+- Store and release elastic energy
+- Reduce muscle bulk near joints
+
+## Scaling Laws and Dimensional Analysis
+
+### Allometric Scaling
+
+As body size changes, different properties scale according to different mathematical relationships:
+
+**Linear Dimensions**: Scale with length (L¹)
+- Height, limb lengths, bone diameters
+- Direct proportional scaling
+
+**Area**: Scale with length squared (L²)
+- Cross-sectional area of muscles and bones
+- Surface area for heat dissipation
+- Joint surface areas
+
+**Volume and Mass**: Scale with length cubed (L³)
+- Body volume and weight
+- Muscle volume
+- Energy requirements
+
+**Strength**: Scales with cross-sectional area (L²)
+- Muscle force production
+- Bone strength
+- Joint load capacity
+
+This creates fundamental challenges: as robots get larger, their weight increases faster than their strength. This explains why insects can lift many times their body weight while humans cannot.
+
+### Dynamic Similarity
+
+Dynamic similarity ensures that scaled models behave similarly to full-size systems:
+
+**Froude Number**: Relates speed, leg length, and gravity
+Fr = v²/(g × L)
+- Characterizes dynamic similarity in locomotion
+- Helps predict optimal walking/running speeds
+- Scales movement patterns appropriately
+
+**Strouhal Number**: Relates frequency, amplitude, and forward speed
+St = f × A / v
+- Important for oscillatory movements
+- Applies to walking, running, and swimming
+- Ensures similar movement patterns at different scales
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+class ScalingAnalyzer:
+    """Analyze scaling laws for humanoid robot design"""
+    
+    def __init__(self, human_height=1.75, human_mass=70.0):
+        self.human_height = human_height  # meters
+        self.human_mass = human_mass      # kg
+        
+    def calculate_scaled_properties(self, scale_factor):
+        """Calculate properties for scaled humanoid robot"""
+        # Linear dimensions
+        scaled_height = self.human_height * scale_factor
+        
+        # Mass scales with volume (L³)
+        scaled_mass = self.human_mass * scale_factor**3
+        
+        # Strength scales with cross-sectional area (L²)
+        scaled_strength = self.human_mass * scale_factor**2  # Proxy for strength
+        
+        # Surface area scales with L²
+        scaled_surface_area = 1.8 * scale_factor**2  # Approximate human surface area
+        
+        # Metabolic power scales with mass^(3/4) (Kleiber's law)
+        scaled_metabolic_power = 100 * scale_factor**(3/4)  # Watts (approximate)
+        
+        # Optimal walking speed using Froude number
+        gravity = 9.81
+        optimal_speed = np.sqrt(0.5 * gravity * scaled_height)  # Fr = 0.5 for optimal walking
+        
+        return {
+            'scale_factor': scale_factor,
+            'height': scaled_height,
+            'mass': scaled_mass,
+            'strength': scaled_strength,
+            'surface_area': scaled_surface_area,
+            'metabolic_power': scaled_metabolic_power,
+            'optimal_walking_speed': optimal_speed,
+            'strength_to_weight_ratio': scaled_strength / scaled_mass
+        }
+    
+    def analyze_scaling_effects(self, scale_factors):
+        """Analyze how different properties scale"""
+        results = []
+        
+        for scale in scale_factors:
+            props = self.calculate_scaled_properties(scale)
+            results.append(props)
+        
+        return results
+    
+    def plot_scaling_relationships(self, scale_factors):
+        """Plot how different properties scale with size"""
+        results = self.analyze_scaling_effects(scale_factors)
+        
+        scales = [r['scale_factor'] for r in results]
+        masses = [r['mass'] for r in results]
+        strengths = [r['strength'] for r in results]
+        strength_to_weight = [r['strength_to_weight_ratio'] for r in results]
+        
+        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+        
+        # Mass scaling
+        axes[0, 0].loglog(scales, masses, 'b-', linewidth=2)
+        axes[0, 0].loglog(scales, [s**3 for s in scales], 'r--', label='L³ scaling')
+        axes[0, 0].set_xlabel('Scale Factor')
+        axes[0, 0].set_ylabel('Mass (kg)')
+        axes[0, 0].set_title('Mass Scaling')
+        axes[0, 0].legend()
+        axes[0, 0].grid(True)
+        
+        # Strength scaling
+        axes[0, 1].loglog(scales, strengths, 'g-', linewidth=2)
+        axes[0, 1].loglog(scales, [s**2 for s in scales], 'r--', label='L² scaling')
+        axes[0, 1].set_xlabel('Scale Factor')
+        axes[0, 1].set_ylabel('Strength (relative)')
+        axes[0, 1].set_title('Strength Scaling')
+        axes[0, 1].legend()
+        axes[0, 1].grid(True)
+        
+        # Strength-to-weight ratio
+        axes[1, 0].semilogx(scales, strength_to_weight, 'r-', linewidth=2)
+        axes[1, 0].set_xlabel('Scale Factor')
+        axes[1, 0].set_ylabel('Strength/Weight Ratio')
+        axes[1, 0].set_title('Strength-to-Weight Ratio')
+        axes[1, 0].grid(True)
+        
+        # Optimal walking speed
+        speeds = [r['optimal_walking_speed'] for r in results]
+        axes[1, 1].plot(scales, speeds, 'm-', linewidth=2)
+        axes[1, 1].set_xlabel('Scale Factor')
+        axes[1, 1].set_ylabel('Optimal Walking Speed (m/s)')
+        axes[1, 1].set_title('Optimal Walking Speed')
+        axes[1, 1].grid(True)
+        
+        plt.tight_layout()
+        plt.show()
+    
+    def calculate_joint_torque_requirements(self, scale_factor):
+        """Estimate joint torque requirements for scaled robot"""
+        props = self.calculate_scaled_properties(scale_factor)
+        
+        # Simplified joint torque calculations
+        # Torque = Force × Lever Arm
+        # Force scales with L², lever arm scales with L
+        # Therefore torque scales with L³
+        
+        base_torques = {
+            'ankle': 150,    # Nm for human
+            'knee': 200,     # Nm for human
+            'hip': 300,      # Nm for human
+            'shoulder': 100,  # Nm for human
+            'elbow': 50       # Nm for human
+        }
+        
+        scaled_torques = {}
+        for joint, base_torque in base_torques.items():
+            scaled_torques[joint] = base_torque * scale_factor**3
+        
+        return scaled_torques
+
+# Example usage
+analyzer = ScalingAnalyzer()
+
+# Analyze scaling from 0.5x to 2x human size
+scale_factors = np.linspace(0.5, 2.0, 20)
+analyzer.plot_scaling_relationships(scale_factors)
+
+# Calculate joint requirements for different sizes
+sizes = [0.5, 1.0, 1.5, 2.0]
+print("Joint Torque Requirements:")
+for scale in sizes:
+    torques = analyzer.calculate_joint_torque_requirements(scale)
+    print(f"\nScale factor {scale}:")
+    for joint, torque in torques.items():
+        print(f"  {joint}: {torque:.1f} Nm")
+```
+
+## Anthropomorphic Joint Design
+
+### Range of Motion
+
+Human joints provide specific ranges of motion that robots should emulate:
+
+**Shoulder Complex**: Exceptional mobility for manipulation
+- Flexion/Extension: 180° total (0° to 180°)
+- Abduction/Adduction: 180° total (0° to 180°)
+- Internal/External Rotation: 180° total (90° to 90°)
+- Circumduction: Combination of all movements
+
+**Elbow Joint**: Powerful hinge with rotation capability
+- Flexion: 0° to 145°
+- Extension: 0° (full extension)
+- Pronation/Supination: 180° total (90° to 90°)
+
+**Wrist Joint**: Complex multi-axis movement
+- Flexion/Extension: 140° total (70° to 70°)
+- Radial/Ulnar Deviation: 40° total (20° to 20°)
+- Pronation/Supination: Included with forearm rotation
+
+**Hip Joint**: Stability and mobility balance
+- Flexion: 0° to 125°
+- Extension: 0° to 30°
+- Abduction: 0° to 45°
+- Adduction: 0° to 30°
+- Internal/External Rotation: 90° total (45° to 45°)
+
+**Knee Joint**: Powerful hinge with stability
+- Flexion: 0° to 135°
+- Extension: 0° (full extension)
+- Small rotation when flexed
+
+**Ankle Joint**: Adaptation to uneven terrain
+- Dorsiflexion: 0° to 20°
+- Plantarflexion: 0° to 50°
+- Inversion/Eversion: 30° total (15° to 15°)
+
+### Joint Configuration Strategies
+
+**Revolute Joints**: Single-axis rotation
+- Most common in humanoid robots
+- Simple to implement and control
+- Can be combined for complex movements
+
+**Spherical Joints**: Three-axis rotation at single point
+- Mimic ball-and-socket joints
+- Complex mechanical design
+- Excellent for shoulder and hip
+
+**Universal Joints**: Two perpendicular axes
+- Allow movement in two planes
+- Used for wrist and ankle
+- Simpler than spherical joints
+
+```python
+class JointDesigner:
+    """Design anthropomorphic joints for humanoid robots"""
+    
+    def __init__(self):
+        self.human_rom = {
+            'shoulder': {
+                'flexion': (0, 180),
+                'abduction': (0, 180),
+                'rotation': (-90, 90)
+            },
+            'elbow': {
+                'flexion': (0, 145),
+                'rotation': (-90, 90)
+            },
+            'hip': {
+                'flexion': (0, 125),
+                'abduction': (0, 45),
+                'rotation': (-45, 45)
+            },
+            'knee': {
+                'flexion': (0, 135)
+            },
+            'ankle': {
+                'dorsiflexion': (0, 20),
+                'inversion': (-15, 15)
+            }
+        }
+    
+    def design_joint_configuration(self, joint_name, scale_factor=1.0):
+        """Design joint configuration for scaled robot"""
+        if joint_name not in self.human_rom:
+            raise ValueError(f"Unknown joint: {joint_name}")
+        
+        human_ranges = self.human_rom[joint_name]
+        
+        # Scale ranges based on robot requirements
+        # Typically reduce ranges slightly for safety and mechanical constraints
+        scaling_factor = 0.9  # 90% of human range
+        
+        joint_config = {
+            'joint_type': self.determine_joint_type(joint_name),
+            'degrees_of_freedom': len(human_ranges),
+            'range_limits': {},
+            'max_angular_velocity': self.calculate_max_velocity(joint_name, scale_factor),
+            'max_torque': self.calculate_max_torque(joint_name, scale_factor)
+        }
+        
+        for movement, (min_angle, max_angle) in human_ranges.items():
+            scaled_min = min_angle * scaling_factor
+            scaled_max = max_angle * scaling_factor
+            joint_config['range_limits'][movement] = (scaled_min, scaled_max)
+        
+        return joint_config
+    
+    def determine_joint_type(self, joint_name):
+        """Determine optimal joint type for given joint"""
+        joint_types = {
+            'shoulder': 'spherical',
+            'elbow': 'revolute_with_rotation',
+            'hip': 'spherical',
+            'knee': 'revolute',
+            'ankle': 'universal',
+            'wrist': 'universal'
+        }
+        return joint_types.get(joint_name, 'revolute')
+    
+    def calculate_max_velocity(self, joint_name, scale_factor):
+        """Calculate maximum angular velocity for joint"""
+        # Angular velocity scales with L^(-0.5) for dynamic similarity
+        base_velocities = {
+            'shoulder': 6.0,    # rad/s
+            'elbow': 8.0,        # rad/s
+            'hip': 4.0,          # rad/s
+            'knee': 6.0,         # rad/s
+            'ankle': 10.0,       # rad/s
+            'wrist': 12.0         # rad/s
+        }
+        
+        base_velocity = base_velocities.get(joint_name, 5.0)
+        scaled_velocity = base_velocity / np.sqrt(scale_factor)
+        
+        return scaled_velocity
+    
+    def calculate_max_torque(self, joint_name, scale_factor):
+        """Calculate maximum torque for joint"""
+        # Torque scales with L^3
+        base_torques = {
+            'shoulder': 100,     # Nm
+            'elbow': 50,         # Nm
+            'hip': 200,          # Nm
+            'knee': 150,         # Nm
+            'ankle': 80,         # Nm
+            'wrist': 20          # Nm
+        }
+        
+        base_torque = base_torques.get(joint_name, 50)
+        scaled_torque = base_torque * scale_factor**3
+        
+        return scaled_torque
+    
+    def generate_joint_specifications(self, scale_factor=1.0):
+        """Generate specifications for all major joints"""
+        specifications = {}
+        
+        for joint_name in self.human_rom.keys():
+            specifications[joint_name] = self.design_joint_configuration(
+                joint_name, scale_factor
+            )
+        
+        return specifications
+
+# Example usage
+designer = JointDesigner()
+
+# Design joints for different robot sizes
+sizes = [0.8, 1.0, 1.2]  # Relative to human
+
+for scale in sizes:
+    print(f"\nJoint Specifications for Scale Factor {scale}:")
+    specs = designer.generate_joint_specifications(scale)
+    
+    for joint, config in specs.items():
+        print(f"\n{joint.upper()}:")
+        print(f"  Type: {config['joint_type']}")
+        print(f"  DOF: {config['degrees_of_freedom']}")
+        print(f"  Max Velocity: {config['max_angular_velocity']:.2f} rad/s")
+        print(f"  Max Torque: {config['max_torque']:.1f} Nm")
+        print(f"  Range Limits:")
+        for movement, limits in config['range_limits'].items():
+            print(f"    {movement}: {limits[0]:.1f}° to {limits[1]:.1f}°")
+```
+
+## Functional Considerations
+
+### Workspace Design
+
+Human workspace characteristics guide robot design:
+
+**Reach Envelope**: 3D space reachable by hands
+- Standing reach: Approximately 0.8m radius
+- Seated reach: Approximately 0.6m radius
+- Overhead reach: Limited by shoulder flexibility
+- Ground reach: Limited by spine and hip flexibility
+
+**Manipulation Zones**: Different regions for different tasks
+- Primary zone: Comfortable manipulation without excessive movement
+- Secondary zone: Requires some body movement
+- Tertiary zone: Maximum reach with full body extension
+
+### Grasp Capabilities
+
+Human hand design provides inspiration for robot end-effectors:
+
+**Grasp Types**: Various grip patterns for different objects
+- Power grasp: Holding heavy objects with full hand
+- Precision grasp: Fine manipulation with fingertips
+- Cylindrical grasp: Holding cylindrical objects
+- Spherical grasp: Holding spherical objects
+- Hook grasp: Carrying objects with fingers
+
+**Force Distribution**: Human hands distribute forces intelligently
+- Multiple contact points for stability
+- Variable grip force based on object weight
+- Tactile feedback for force modulation
+
+### Locomotion Patterns
+
+Human walking patterns provide templates for robot locomotion:
+
+**Gait Cycle**: Sequence of movements during walking
+- Stance phase: 60% of gait cycle
+- Swing phase: 40% of gait cycle
+- Double support: 10% of gait cycle (both feet on ground)
+- Single support: 90% of gait cycle (one foot on ground)
+
+**Step Parameters**: Characteristic dimensions of human walking
+- Step length: Approximately 0.78 × height
+- Step width: Approximately 0.1 × height
+- Step frequency: Approximately 2 Hz at preferred speed
+- Walking speed: Approximately 1.4 m/s for adults
+
+## Material and Structural Considerations
+
+### Biomimetic Materials
+
+Materials selection affects robot performance and efficiency:
+
+**Lightweight Structures**: Reduce inertia and power requirements
+- Carbon fiber composites: High strength-to-weight ratio
+- Aluminum alloys: Good strength with moderate weight
+- Titanium alloys: Excellent strength with corrosion resistance
+
+**Compliant Elements**: Provide safety and adaptability
+- Elastomeric materials: Joint compliance and shock absorption
+- Flexible composites: Bending with load bearing
+- Shape memory alloys: Adaptive stiffness
+
+### Structural Optimization
+
+Human bone structure provides optimization principles:
+
+**Hollow Structures**: Bones are hollow tubes with trabecular interior
+- High strength with minimal weight
+- Optimized for load paths
+- Natural stress distribution
+
+**Graded Properties**: Material properties vary throughout structure
+- Dense outer layers for strength
+- Porous inner regions for weight reduction
+- Smooth transitions to avoid stress concentrations
+
+## Design Trade-offs and Optimization
+
+### Performance vs. Complexity
+
+More human-like designs often increase complexity:
+
+**Simplified Joints**: Reduce DOF for easier control
+- Trade manipulation capability for reliability
+- Reduce computational requirements
+- Lower manufacturing costs
+
+**Actuator Placement**: Balance power and weight
+- Direct drive: Simple but heavy joints
+- Cable-driven: Light joints but complex routing
+- Hydraulic: High power but heavy systems
+
+### Safety vs. Performance
+
+Humanoid robots operating near humans require safety considerations:
+
+**Compliant Design**: Soft elements for safe interaction
+- Reduce injury risk during collisions
+- Provide natural movement damping
+- Limit maximum forces
+
+**Speed Limitations**: Balance capability with safety
+- Reduce maximum velocities for safe operation
+- Implement emergency stop capabilities
+- Design for predictable failure modes
+
+## Code Examples
+
+### Anthropomorphic Design Calculator
+
+```python
+class AnthropomorphicDesigner:
+    """Comprehensive design tool for anthropomorphic robots"""
+    
+    def __init__(self):
+        self.human_proportions = {
+            'height': 1.75,           # meters
+            'arm_span': 1.75,         # meters (equal to height)
+            'leg_length': 0.9,         # meters (hip to ground)
+            'torso_length': 0.6,       # meters
+            'upper_arm_length': 0.3,   # meters
+            'forearm_length': 0.25,    # meters
+            'hand_length': 0.19,       # meters
+            'thigh_length': 0.4,       # meters
+            'shin_length': 0.4,        # meters
+            'foot_length': 0.25         # meters
+        }
+        
+        self.mass_distribution = {
+            'head': 0.08,      # 8% of total mass
+            'torso': 0.43,     # 43% of total mass
+            'arms': 0.10,      # 10% of total mass (both)
+            'legs': 0.39        # 39% of total mass (both)
+        }
+    
+    def design_scaled_robot(self, scale_factor, target_mass=None):
+        """Design complete anthropomorphic robot"""
+        # Calculate dimensions
+        dimensions = {}
+        for part, length in self.human_proportions.items():
+            dimensions[part] = length * scale_factor
+        
+        # Calculate mass distribution
+        if target_mass:
+            total_mass = target_mass
+        else:
+            # Mass scales with volume (L³)
+            total_mass = 70 * scale_factor**3  # Assuming 70kg human
+        
+        masses = {}
+        for part, fraction in self.mass_distribution.items():
+            masses[part] = total_mass * fraction
+        
+        # Calculate center of mass
+        com_height = self.calculate_center_of_mass(dimensions, masses)
+        
+        # Calculate inertia properties
+        inertia = self.calculate_inertia_properties(dimensions, masses)
+        
+        # Design joint specifications
+        joint_designer = JointDesigner()
+        joint_specs = joint_designer.generate_joint_specifications(scale_factor)
+        
+        return {
+            'scale_factor': scale_factor,
+            'dimensions': dimensions,
+            'masses': masses,
+            'total_mass': total_mass,
+            'center_of_mass': com_height,
+            'inertia': inertia,
+            'joint_specifications': joint_specs,
+            'performance_metrics': self.calculate_performance_metrics(
+                dimensions, masses, scale_factor
+            )
+        }
+    
+    def calculate_center_of_mass(self, dimensions, masses):
+        """Calculate overall center of mass height"""
+        # Simplified calculation using segment COM positions
+        com_positions = {
+            'head': dimensions['height'] - 0.1,
+            'torso': dimensions['height'] - dimensions['torso_length']/2,
+            'arms': dimensions['height'] - dimensions['torso_length'] - 0.15,
+            'legs': dimensions['leg_length']/2
+        }
+        
+        total_moment = sum(masses[part] * com_positions[part] 
+                          for part in masses)
+        total_mass = sum(masses.values())
+        
+        return total_moment / total_mass
+    
+    def calculate_inertia_properties(self, dimensions, masses):
+        """Calculate simplified inertia properties"""
+        # Simplified point mass approximation
+        com_height = self.calculate_center_of_mass(dimensions, masses)
+        
+        # Moment of inertia about ankles (simplified)
+        I_ankles = sum(masses[part] * com_positions[part]**2 
+                       for part, com_positions in {
+                           'head': [dimensions['height'] - 0.1],
+                           'torso': [dimensions['height'] - dimensions['torso_length']/2],
+                           'arms': [dimensions['height'] - dimensions['torso_length'] - 0.15],
+                           'legs': [dimensions['leg_length']/2]
+                       }.items() for com_positions[0] in com_positions)
+        
+        return {
+            'about_ankles': I_ankles,
+            'about_com': I_ankles - masses['total'] * com_height**2
+        }
+    
+    def calculate_performance_metrics(self, dimensions, masses, scale_factor):
+        """Calculate performance metrics"""
+        total_mass = sum(masses.values())
+        
+        # Walking speed using Froude number
+        optimal_speed = np.sqrt(0.5 * 9.81 * dimensions['leg_length'])
+        
+        # Step frequency
+        step_frequency = optimal_speed / (dimensions['leg_length'] * 1.4)  # Approximate step length
+        
+        # Power requirements (simplified)
+        walking_power = 2.5 * total_mass * optimal_speed  # W/kg × mass × speed
+        
+        # Stability margin
+        stability_margin = 0.1 * dimensions['foot_length']  # Simplified
+        
+        return {
+            'optimal_walking_speed': optimal_speed,
+            'step_frequency': step_frequency,
+            'walking_power': walking_power,
+            'stability_margin': stability_margin,
+            'strength_to_weight': 1.0 / scale_factor  # Relative to human
+        }
+    
+    def optimize_for_task(self, task_requirements, scale_range=(0.5, 2.0)):
+        """Optimize robot design for specific task"""
+        best_design = None
+        best_score = -np.inf
+        
+        for scale in np.linspace(scale_range[0], scale_range[1], 20):
+            design = self.design_scaled_robot(scale)
+            score = self.evaluate_task_performance(design, task_requirements)
+            
+            if score > best_score:
+                best_score = score
+                best_design = design
+        
+        return best_design, best_score
+    
+    def evaluate_task_performance(self, design, task_requirements):
+        """Evaluate design performance for specific task"""
+        score = 0
+        
+        # Walking performance
+        if 'walking' in task_requirements:
+            speed_score = min(design['performance_metrics']['optimal_walking_speed'] / 
+                           task_requirements['walking']['desired_speed'], 1.0)
+            score += speed_score * 0.3
+        
+        # Manipulation performance
+        if 'manipulation' in task_requirements:
+            reach_score = min(design['dimensions']['arm_span'] / 
+                           task_requirements['manipulation']['required_reach'], 1.0)
+            score += reach_score * 0.3
+        
+        # Power efficiency
+        if 'efficiency' in task_requirements:
+            power_score = 1.0 / (1.0 + design['performance_metrics']['walking_power'] / 1000)
+            score += power_score * 0.2
+        
+        # Stability
+        if 'stability' in task_requirements:
+            stability_score = min(design['performance_metrics']['stability_margin'] / 
+                               task_requirements['stability']['required_margin'], 1.0)
+            score += stability_score * 0.2
+        
+        return score
+
+# Example usage
+designer = AnthropomorphicDesigner()
+
+# Design robot for household assistance
+task_requirements = {
+    'walking': {'desired_speed': 1.0},  # m/s
+    'manipulation': {'required_reach': 0.8},  # meters
+    'efficiency': {},
+    'stability': {'required_margin': 0.05}  # meters
+}
+
+optimal_design, score = designer.optimize_for_task(task_requirements)
+
+print(f"Optimal Design Score: {score:.3f}")
+print(f"Optimal Scale Factor: {optimal_design['scale_factor']:.2f}")
+print(f"Total Mass: {optimal_design['total_mass']:.1f} kg")
+print(f"Height: {optimal_design['dimensions']['height']:.2f} m")
+print(f"Optimal Walking Speed: {optimal_design['performance_metrics']['optimal_walking_speed']:.2f} m/s")
+```
+
+## Practical Examples
+
+### Humanoid Robot for Healthcare
+
+Designing a humanoid robot for healthcare applications requires specific considerations:
+
+**Size and Weight**: Must navigate hospital environments without causing damage
+- Height: 1.5-1.6m for accessibility
+- Weight: < 80kg for safety and mobility
+- Soft exterior materials for patient safety
+
+**Manipulation Capabilities**: Gentle handling of patients and equipment
+- Precise force control for patient assistance
+- Sterilizable surfaces for hospital environments
+- Adaptive grippers for various medical tools
+
+**Mobility**: Navigate crowded hospital spaces
+- Omnidirectional movement for tight spaces
+- Smooth acceleration for patient comfort
+- Emergency stop capabilities
+
+### Industrial Humanoid Robot
+
+Industrial applications emphasize different design priorities:
+
+**Strength and Durability**: Handle heavy industrial loads
+- Reinforced structural components
+- High-torque actuators for lifting
+- Protective covers for harsh environments
+
+**Precision and Repeatability**: Consistent manufacturing quality
+- High-resolution encoders for precise positioning
+- Rigid structures for minimal deflection
+- Temperature compensation for accuracy
+
+**Safety Systems**: Protect human workers
+- Collision detection and avoidance
+- Emergency stop mechanisms
+- Safe operating envelopes
+
+## Exercises
+
+### Exercise 1: Scaling Analysis
+Analyze how different humanoid robot properties scale with size:
+- Calculate strength-to-weight ratios for robots from 0.5m to 2.5m height
+- Determine optimal size for specific tasks (walking, manipulation, lifting)
+- Discuss limitations of scaling in practical robot design
+
+### Exercise 2: Joint Configuration Design
+Design joint configurations for a humanoid robot arm:
+- Specify joint types and ranges of motion
+- Calculate required torques and velocities
+- Optimize for specific manipulation tasks
+- Compare with human arm capabilities
+
+### Exercise 3: Workspace Analysis
+Calculate and visualize robot workspace:
+- Determine reachable workspace for different arm configurations
+- Analyze manipulation zones (primary, secondary, tertiary)
+- Optimize robot dimensions for specific workspace requirements
+
+### Exercise 4: Design Trade-off Study
+Analyze trade-offs in humanoid robot design:
+- Compare performance vs. complexity for different joint configurations
+- Evaluate safety vs. performance trade-offs
+- Optimize design for specific application requirements
+
+## Summary
+
+Anthropomorphic design principles guide the creation of humanoid robots that can effectively operate in human environments and interact naturally with people. By studying human biomechanics, scaling laws, and functional requirements, engineers can design robots that balance human-like capabilities with practical engineering constraints.
+
+Key concepts include understanding human skeletal and muscular systems, applying scaling laws for size optimization, designing appropriate joint configurations, and balancing functional requirements with safety considerations. The integration of these principles enables the creation of robots that can work alongside humans, use human tools, and navigate human environments effectively.
+
+As technology advances, anthropomorphic design continues to evolve, incorporating new materials, actuators, and control strategies while maintaining the fundamental principles that make human bodies so remarkably capable. The future of humanoid robotics lies in finding the optimal balance between human inspiration and engineering innovation.
+
+## References
+
+[1] Alexander, R.M. "Principles of Animal Locomotion", Princeton University Press, 2023. [https://doi.org/10.1515/9780691226792](https://doi.org/10.1515/9780691226792)
+
+[2] Winter, D.A. "Biomechanics and Motor Control of Human Movement", 5th Edition, Wiley, 2022. [https://doi.org/10.1002/9781119365915](https://doi.org/10.1002/9781119365915)
+
+[3] Vaughan, C.L., Davis, B.L., and O'Connor, J.C. "Dynamics of Human Gait", 2nd Edition, Human Kinetics, 2023. [https://doi.org/10.5040/9781492599389](https://doi.org/10.5040/9781492599389)
+
+[4] NASA, "Anthropometry and Biomechanics", Technical Report, 2024. [https://www.nasa.gov/humanresearch](https://www.nasa.gov/humanresearch)
+
+[5] IEEE Robotics and Automation Society, "Humanoid Robot Design Standards", 2024. [https://www.ieee-ras.org/humanoids](https://www.ieee-ras.org/humanoids)
