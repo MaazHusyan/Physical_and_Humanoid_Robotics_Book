@@ -49,12 +49,20 @@ class Settings:
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
         self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+        # Database Configuration
+        self.DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost/robotics_book")
+
         # RAG Settings
         self.CHUNK_MAX_SIZE = 1000
         self.RETRIEVAL_TOP_K = 3
         self.SIMILARITY_THRESHOLD = 0.7
         self.RETRY_ATTEMPTS = 3
         self.RETRY_INITIAL_DELAY = 2.0
+
+        # Authentication Settings
+        self.SECRET_KEY = os.getenv("SECRET_KEY", "")
+        self.ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+        self.REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
     def validate(self) -> bool:
         """Validate that required API keys are set."""
